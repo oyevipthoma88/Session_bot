@@ -1,19 +1,13 @@
 #!/usr/bin/env bash
 set -e
-
-echo "=== STEP 1: Clean old pyrogram/pyrofork ==="
+echo "=== STEP 1: Clean old packages ==="
 pip uninstall -y pyrogram pyrofork pyromod pyrogrammod 2>/dev/null || true
 
 echo "=== STEP 2: Install pyrofork WITH dependencies ==="
 pip install pyrofork
 
-echo "=== STEP 3: Install pyromod (no deps to avoid conflict) ==="
-pip install pyromod --no-deps
-
-echo "=== STEP 4: Verify colored buttons ==="
-python -c "from pyrogram.types import KeyboardButtonStyle; print('KEYBOARD_STYLE: AVAILABLE')" || echo "KEYBOARD_STYLE: NOT_AVAILABLE"
-
-echo "=== STEP 5: Verify pymediainfo ==="
-python -c "import pymediainfo; print('PYMEDIAINFO: OK')" || echo "PYMEDIAINFO: MISSING"
+echo "=== STEP 3: Verify native listen + KeyboardButtonStyle ==="
+python -c "from pyrogram.types import KeyboardButtonStyle; print('COLOR: OK')" || echo "COLOR: MISSING"
+python -c "from pyrogram import Client; print('LISTEN:', 'OK' if hasattr(Client, 'listen') else 'MISSING')"
 
 echo "=== POST_COMPILE DONE ==="

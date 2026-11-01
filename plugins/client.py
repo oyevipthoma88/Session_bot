@@ -1,5 +1,4 @@
 import os
-import pyromod  # noqa: F401 — MUST import before Client
 from pyrogram import Client
 from pyrogram.enums import ParseMode
 

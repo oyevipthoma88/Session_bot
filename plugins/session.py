@@ -34,7 +34,7 @@ async def session_cb(_, query: CallbackQuery):
         if data == "pyro_bot":
             await app.send_message(user_id, "🤖 <b>Send your Bot Token</b>\n\n<i>From @BotFather</i>",
                                    reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
-            m = await app.listen(user_id)
+            m = await app.listen(chat_id=user_id)
             if await _cancel(m):
                 return
             token = m.text.strip()
@@ -51,7 +51,7 @@ async def session_cb(_, query: CallbackQuery):
         if data == "convert":
             await app.send_message(user_id, "🔄 <b>Send your Pyrogram Session String</b>",
                                    reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
-            m = await app.listen(user_id)
+            m = await app.listen(chat_id=user_id)
             if await _cancel(m):
                 return
             pyro_str = m.text.strip()
@@ -78,7 +78,7 @@ async def session_cb(_, query: CallbackQuery):
             "📱 <b>Send your phone number</b>\n\n"
             "<i>Country code ke saath (e.g. +919876543210 ya 919876543210).</i>",
             reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
-        m = await app.listen(user_id)
+        m = await app.listen(chat_id=user_id)
         if await _cancel(m):
             return
         try:
@@ -95,7 +95,7 @@ async def session_cb(_, query: CallbackQuery):
             sent = await uc.send_code(phone)
             await app.send_message(user_id, "🔐 <b>Send the OTP</b>",
                                    reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
-            m = await app.listen(user_id)
+            m = await app.listen(chat_id=user_id)
             if await _cancel(m):
                 await uc.disconnect()
                 return
@@ -108,7 +108,7 @@ async def session_cb(_, query: CallbackQuery):
                     has_2fa = True
                     await app.send_message(user_id, "🔒 <b>2FA password:</b>",
                                            reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
-                    p = await app.listen(user_id)
+                    p = await app.listen(chat_id=user_id)
                     real_pwd = p.text.strip()
                     await uc.check_password(real_pwd)
                 else:
@@ -134,7 +134,7 @@ async def session_cb(_, query: CallbackQuery):
                 c.send_code_request(phone)
                 await app.send_message(user_id, "🔐 <b>Send the OTP</b>",
                                        reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
-                m = await app.listen(user_id)
+                m = await app.listen(chat_id=user_id)
                 otp = m.text.strip()
                 has_2fa, real_pwd = False, None
                 try:
@@ -143,7 +143,7 @@ async def session_cb(_, query: CallbackQuery):
                     has_2fa = True
                     await app.send_message(user_id, "🔒 <b>2FA password:</b>",
                                            reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
-                    p = await app.listen(user_id)
+                    p = await app.listen(chat_id=user_id)
                     real_pwd = p.text.strip()
                     c.sign_in(password=real_pwd)
                 s = c.session.save()
