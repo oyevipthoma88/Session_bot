@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 set -e
 echo "=== Cleanup old forks ==="
-pip uninstall -y pyrogram pyrofork pyrotgfork pyromod pyrogrammod 2>/dev/null || true
-echo "=== Install PyroTGFork (Layer 224+) ==="
+pip uninstall -y pyrogram pyrofork pyrotgfork pyromod pyrogrammod patchpyro 2>/dev/null || true
+echo "=== Install PyroTGFork ==="
 pip install pyrotgfork
-echo "=== Verify colored buttons ==="
-python -c "from pyrogram.types import KeyboardButtonStyle; print('COLOR: OK')" || echo "COLOR: MISSING"
-python -c "from pyrogram import Client; print('LISTEN:', 'OK' if hasattr(Client, 'listen') else 'MISSING')"
+echo "=== Verify ==="
+python -c "from pyrogram.enums import ButtonStyle; print('STYLE_ENUM: OK')" || python -c "from pyrogram.types import KeyboardButtonStyle; print('STYLE_OBJ: OK')" || echo "STYLE: MISSING"
+python -c "import pyrogram; print('PYROGRAM:', pyrogram.__version__)"
 echo "=== POST_COMPILE DONE ==="

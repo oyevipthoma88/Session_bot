@@ -7,22 +7,16 @@ API_HASH = os.environ.get("API_HASH", "")
 MUST_JOIN = os.environ.get("MUST_JOIN", "")
 OWNER_ID = int(os.environ.get("OWNER_ID", 0))
 
-def _safe_int(key):
-    try:
-        return int(os.environ.get(key, 0))
-    except (ValueError, TypeError):
-        return 0
-
-def _parse_chat_id(key):
+def _parse_chat(key):
     raw = os.environ.get(key, "").strip()
     if not raw:
         return None
     try:
         return int(raw)
     except ValueError:
-        return raw  # @username or t.me link
+        return raw
 
-LOG_CHANNEL_ID = _parse_chat_id("LOG_CHANNEL_ID")
+LOG_CHANNEL_ID = _parse_chat("LOG_CHANNEL_ID")
 MONGO_URI = os.environ.get("MONGO_URI", "").strip()
 START_PIC = os.environ.get("START_PIC", "").strip()
 
