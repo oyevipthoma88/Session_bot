@@ -9,7 +9,7 @@ OWNER_ID = int(os.environ.get("OWNER_ID", 0))
 LOG_CHANNEL_ID = int(os.environ.get("LOG_CHANNEL_ID", 0))
 
 MONGO_URI = os.environ.get("MONGO_URI", "").strip()
-START_PIC = os.environ.get("START_PIC", "").strip()  # fallback URL/file_id
+START_PIC = os.environ.get("START_PIC", "").strip()
 
 AUTO_JOIN_CHANNELS = [
     c.strip() for c in os.environ.get("AUTO_JOIN_CHANNELS", "").split(",") if c.strip()

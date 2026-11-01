@@ -18,7 +18,7 @@ if config.MONGO_URI:
     except Exception as e:
         logging.error(f"MongoDB init failed: {e}")
 else:
-    logging.warning("MONGO_URI not set — DB features disabled (bot still works)")
+    logging.warning("MONGO_URI not set — DB features disabled")
 
 def is_enabled():
     return db is not None

@@ -20,7 +20,7 @@ async def start(_, message):
                 await message.reply_photo(pic, caption=WELCOME, reply_markup=MAIN_MENU)
                 return
             except Exception:
-                pass  # file_id invalid → text fallback
+                pass
         await message.reply_text(WELCOME, reply_markup=MAIN_MENU, disable_web_page_preview=True)
     except Exception as e:
         await handle_error(e, message.from_user.id, "start")

