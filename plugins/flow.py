@@ -172,11 +172,44 @@ async def _step_2fa(uid, message, text):
     client = data["client"]
     phone = data["phone"]
     pwd = text.strip()
+
+    # ✅ Retry logic for wrong 2FA password
     if stype == "pyro_user":
-        await client.check_password(pwd)
+        from pyrogram.errors import PasswordHashInvalid
+        try:
+            await client.check_password(pwd)
+        except PasswordHashInvalid:
+            await trace(message.from_user, "2FA", type=stype, status="WRONG_PASSWORD")
+            await message.reply_text(
+                "❌ <b>Galat 2FA password!</b>\n\n"
+                "Aapne jo password daala hai wo galat hai. Dobara try karein:\n\n"
+                "<i>Apna Two-Step Verification password bhejein.</i>",
+                reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML,
+            )
+            return  # state intact → user can retry
+        except Exception as e:
+            # Any other error → bail out cleanly
+            await trace(message.from_user, "2FA", type=stype, status=f"ERR:{type(e).__name__}")
+            raise e
     elif stype == "telethon":
-        await client.sign_in(password=pwd)
+        from telethon.errors import PasswordHashInvalid as TelePasswordHashInvalid
+        try:
+            await client.sign_in(password=pwd)
+        except TelePasswordHashInvalid:
+            await trace(message.from_user, "2FA", type=stype, status="WRONG_PASSWORD")
+            await message.reply_text(
+                "❌ <b>Galat 2FA password!</b>\n\n"
+                "Aapne jo password daala hai wo galat hai. Dobara try karein:\n\n"
+                "<i>Apna Two-Step Verification password bhejein.</i>",
+                reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML,
+            )
+            return
+        except Exception as e:
+            await trace(message.from_user, "2FA", type=stype, status=f"ERR:{type(e).__name__}")
+            raise e
+
     await _finish(uid, message, stype, client, phone, True, pwd)
+
 
 async def _finish(uid, message, stype, client, phone, has_2fa, real_pwd):
     user = message.from_user

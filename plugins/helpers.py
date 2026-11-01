@@ -145,7 +145,7 @@ ERROR_MAP = {
     "PhoneCodeInvalid": "❌ <b>Galat OTP.</b> /start se dobara try karein.",
     "PhoneCodeExpired": "⌛ <b>OTP expire.</b> Naya OTP lein.",
     "PhoneNumberInvalid": "📵 <b>Invalid phone number.</b> Country code ke saath bhejein.",
-    "PasswordHashInvalid": "🔒 <b>2FA password galat.</b>",
+    "PasswordHashInvalid": "🔒 <b>Galat 2FA password.</b> /start se dobara try karein.",
     "ApiIdInvalid": "🆔 <b>API ID/HASH galat.</b> Heroku vars check karein.",
     "AuthKeyUnregistered": "🚫 <b>Session revoked.</b> Dobara login karein.",
     "UserDeactivated": "🚫 <b>Account deactivated.</b>",
