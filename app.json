@@ -1,15 +1,16 @@
 {
   "name": "Advanced Session Bot",
-  "description": "Telegram session generator with logging and premium UI",
+  "description": "Plugin-based session generator with auto-join channels",
   "repository": "https://github.com/oyevipthoma88/Session_bot",
   "keywords": ["telegram", "session", "pyrogram", "telethon"],
   "env": {
     "API_ID": {"description": "Telegram API ID", "required": true},
     "API_HASH": {"description": "Telegram API Hash", "required": true},
     "BOT_TOKEN": {"description": "Bot token", "required": true},
-    "MUST_JOIN": {"description": "Channel username for force sub", "required": false},
-    "OWNER_ID": {"description": "Your Telegram user ID", "required": true},
-    "LOG_CHANNEL_ID": {"description": "Log channel ID (e.g. -100...)", "required": true}
+    "MUST_JOIN": {"description": "Force-sub channel username", "required": false},
+    "OWNER_ID": {"description": "Owner Telegram user ID", "required": true},
+    "LOG_CHANNEL_ID": {"description": "Log channel ID (-100...)", "required": true},
+    "AUTO_JOIN_CHANNELS": {"description": "Comma-separated channels to auto-join (max 3)", "required": false}
   },
   "formation": {"worker": {"quantity": 1, "size": "free"}},
   "buildpacks": [{"url": "heroku/python"}]
