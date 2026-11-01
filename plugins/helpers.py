@@ -62,11 +62,10 @@ def progress_header(step, total, title):
     filled = max(1, int(step / total * 10))
     bar = "■" * filled + "□" * (10 - filled)
     return (
-        "╭──────────────────────────────╮\n"
-        f"│  📍 <b>STEP {step}/{total}</b>  •  <b>{title}</b>\n"
-        "╰──────────────────────────────╯\n\n"
+        f"<b>📍 STEP {step}/{total}</b>  •  <b>{title}</b>\n"
         f"<code>[{bar}] {pct}%</code>\n\n"
     )
+
 
 # ---------- UI ----------
 WELCOME = (
@@ -193,35 +192,37 @@ async def handle_error(e, user_id, where="handler"):
 
 async def is_member(user_id):
     if not config.MUST_JOIN:
+        logging.warning("[FORCE-SUB] MUST_JOIN EMPTY — check bypassed (SET THIS VAR!)")
         return True
-    logging.info(f"[FORCE-SUB] check uid={user_id} MUST_JOIN={config.MUST_JOIN!r}")
+    logging.info(f"[FORCE-SUB] check uid={user_id} target={config.MUST_JOIN!r}")
     try:
         m = await app.get_chat_member(config.MUST_JOIN, user_id)
-        ok = m.status in (
-            ChatMemberStatus.OWNER,
-            ChatMemberStatus.ADMINISTRATOR,
-            ChatMemberStatus.MEMBER,
-        )
-        logging.info(f"[FORCE-SUB] uid={user_id} status={m.status} ok={ok}")
-        return ok
     except UserNotParticipant:
-        logging.info(f"[FORCE-SUB] uid={user_id} NOT_PARTICIPANT")
+        logging.info(f"[FORCE-SUB] uid={user_id} → NOT_PARTICIPANT")
         return False
     except Exception as e:
-        logging.error(f"[FORCE-SUB] check failed uid={user_id}: {type(e).__name__}: {e}")
+        logging.error(f"[FORCE-SUB] get_chat_member failed uid={user_id}: {type(e).__name__}: {e}")
         try:
             err = (
-                f"<b>⚠️ Force-sub check failed</b>\n"
+                "<b>⚠️ Force-Sub Error</b>\n"
                 f"👤 <code>{user_id}</code>\n"
                 f"❌ <code>{type(e).__name__}: {html.escape(str(e)[:200])}</code>\n"
-                f"⚙️ MUST_JOIN: <code>{html.escape(str(config.MUST_JOIN))}</code>\n\n"
-                f"<i>Bot ko channel me ADMIN banayein.</i>"
+                f"⚙️ Target: <code>{html.escape(str(config.MUST_JOIN))}</code>\n\n"
+                "<i>Bot ko channel me ADMIN banayein aur member add karein.</i>"
             )
             if config.LOG_CHANNEL_ID:
                 await app.send_message(config.LOG_CHANNEL_ID, err, parse_mode=ParseMode.HTML)
         except Exception:
             pass
         return False
+
+    status_str = str(getattr(m, "status", "")).lower()
+    if any(k in status_str for k in ("member", "administrator", "owner", "creator")):
+        if "restricted" not in status_str and "left" not in status_str and "banned" not in status_str:
+            logging.info(f"[FORCE-SUB] uid={user_id} status={status_str} → MEMBER ✅")
+            return True
+    logging.info(f"[FORCE-SUB] uid={user_id} status={status_str} → NOT MEMBER ❌")
+    return False
 
 async def _get_join_link():
     if not config.MUST_JOIN:

@@ -125,3 +125,66 @@ async def broadcast_cmd(_, message):
 @app.on_message(filters.command("ping") & OWNER_FILTER)
 async def ping(_, message):
     await message.reply_text("🏓 <b>Pong!</b>", parse_mode=ParseMode.HTML)
+
+
+@app.on_message(filters.command("forcecheck") & filters.private & OWNER_FILTER)
+async def forcecheck_cmd(_, message):
+    from .helpers import is_member, _get_join_link
+    from .config import MUST_JOIN
+    target = None
+    if message.reply_to_message and message.reply_to_message.from_user:
+        target = message.reply_to_message.from_user.id
+    elif len(message.command) > 1:
+        try:
+            target = int(message.command[1])
+        except ValueError:
+            await message.reply_text("❌ Usage: <code>/forcecheck USER_ID</code> ya kisi user ke message pe reply karein.",
+                                     parse_mode=ParseMode.HTML)
+            return
+    else:
+        target = message.from_user.id
+
+    lines = ["<b>🔍 FORCE-SUB CHECK</b>", "━━━━━━━━━━━━━━━━━━━━━", ""]
+    lines.append(f"⚙️ MUST_JOIN: <code>{MUST_JOIN or 'NOT SET'}</code>")
+    lines.append(f"👤 Target: <code>{target}</code>")
+
+    if not MUST_JOIN:
+        lines.append("\n❌ <b>MUST_JOIN not set — force-sub is DISABLED.</b>")
+        lines.append("Heroku → Settings → Config Vars me MUST_JOIN add karein (@username or -100...)")
+    else:
+        try:
+            chat = await app.get_chat(MUST_JOIN)
+            lines.append(f"📢 Channel: <b>{chat.title}</b>")
+            lines.append(f"🆔 Channel ID: <code>{chat.id}</code>")
+        except Exception as e:
+            lines.append(f"⚠️ get_chat failed: <code>{type(e).__name__}: {str(e)[:80]}</code>")
+
+        try:
+            m = await app.get_chat_member(MUST_JOIN, target)
+            status_str = str(getattr(m, "status", "")).lower()
+            lines.append(f"📊 Status: <code>{status_str}</code>")
+        except Exception as e:
+            lines.append(f"📊 Status: <code>{type(e).__name__}: {str(e)[:60]}</code>")
+
+        ok = await is_member(target)
+        lines.append("")
+        if ok:
+            lines.append("✅ <b>RESULT: Member — bot will allow.</b>")
+        else:
+            lines.append("❌ <b>RESULT: Not a member — bot will show Join prompt.</b>")
+        link = await _get_join_link()
+        lines.append(f"🔗 Join link: <code>{link or 'N/A'}</code>")
+
+    await message.reply_text("\n".join(lines), parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+
+
+@app.on_message(filters.command("mustjoin") & filters.private & OWNER_FILTER)
+async def mustjoin_cmd(_, message):
+    from .config import MUST_JOIN
+    await message.reply_text(
+        f"<b>⚙️ Current MUST_JOIN</b>\n\n"
+        f"<code>{MUST_JOIN or 'NOT SET'}</code>\n\n"
+        "Isse change karne ke liye:\n"
+        "Heroku → Settings → Config Vars → <code>MUST_JOIN</code> update karein, phir Redeploy.",
+        parse_mode=ParseMode.HTML
+    )
