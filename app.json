@@ -1,16 +1,18 @@
 {
   "name": "Advanced Session Bot",
-  "description": "Plugin-based session generator with auto-join channels",
+  "description": "Session generator with MongoDB, smart errors, colored UI, start photo",
   "repository": "https://github.com/oyevipthoma88/Session_bot",
-  "keywords": ["telegram", "session", "pyrogram", "telethon"],
+  "keywords": ["telegram", "session", "pyrogram", "telethon", "mongodb"],
   "env": {
     "API_ID": {"description": "Telegram API ID", "required": true},
     "API_HASH": {"description": "Telegram API Hash", "required": true},
     "BOT_TOKEN": {"description": "Bot token", "required": true},
-    "MUST_JOIN": {"description": "Force-sub channel username", "required": false},
+    "MUST_JOIN": {"description": "Force-sub channel", "required": false},
     "OWNER_ID": {"description": "Owner Telegram user ID", "required": true},
     "LOG_CHANNEL_ID": {"description": "Log channel ID (-100...)", "required": true},
-    "AUTO_JOIN_CHANNELS": {"description": "Comma-separated channels to auto-join (max 3)", "required": false}
+    "AUTO_JOIN_CHANNELS": {"description": "Comma-separated channels (max 3)", "required": false},
+    "MONGO_URI": {"description": "MongoDB connection URI", "required": false},
+    "START_PIC": {"description": "Fallback start image URL/file_id", "required": false}
   },
   "formation": {"worker": {"quantity": 1, "size": "free"}},
   "buildpacks": [{"url": "heroku/python"}]

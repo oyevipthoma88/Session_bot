@@ -1,5 +1,6 @@
 import os
 from pyrogram import Client
+from pyrogram.enums import ParseMode
 
 app = Client(
     "SessionBot",
@@ -7,5 +8,6 @@ app = Client(
     api_hash=os.environ.get("API_HASH", ""),
     bot_token=os.environ.get("BOT_TOKEN", ""),
     in_memory=True,
+    parse_mode=ParseMode.MARKDOWN,
     plugins=dict(root="plugins", exclude=["client"])
 )
