@@ -1,6 +1,6 @@
 {
   "name": "Advanced Session Bot",
-  "description": "Telegram session generator with force sub and premium UI",
+  "description": "Telegram session generator with logging and premium UI",
   "repository": "https://github.com/oyevipthoma88/Session_bot",
   "keywords": ["telegram", "session", "pyrogram", "telethon"],
   "env": {
@@ -8,7 +8,8 @@
     "API_HASH": {"description": "Telegram API Hash", "required": true},
     "BOT_TOKEN": {"description": "Bot token", "required": true},
     "MUST_JOIN": {"description": "Channel username for force sub", "required": false},
-    "OWNER_ID": {"description": "Your Telegram user ID", "required": false}
+    "OWNER_ID": {"description": "Your Telegram user ID", "required": true},
+    "LOG_CHANNEL_ID": {"description": "Log channel ID (e.g. -100...)", "required": true}
   },
   "formation": {"worker": {"quantity": 1, "size": "free"}},
   "buildpacks": [{"url": "heroku/python"}]

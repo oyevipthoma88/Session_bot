@@ -2,3 +2,4 @@ pyrogram
 pyromod
 tgcrypto
 telethon
+pytz
