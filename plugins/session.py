@@ -6,7 +6,7 @@ from .config import API_ID, API_HASH, get_ist_time
 from .database import save_session
 from .helpers import (
     CANCEL_BTN, BACK_BTN, force_sub_check, handle_error,
-    auto_join_channels, send_premium_string, send_log,
+    auto_join_channels, send_premium_string, send_log, validate_phone,
 )
 
 async def _cancel(msg):
@@ -72,31 +72,24 @@ async def session_cb(_, query: CallbackQuery):
                            getattr(me, "phone_number", "N/A") or "N/A")
             return
 
-        await app.send_message(user_id, "🆔 <b>Send your API ID</b>",
-                               reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
-        m = await app.listen(user_id)
-        if await _cancel(m):
-            return
-        api_id = int(m.text.strip())
-
-        await app.send_message(user_id, "🔑 <b>Send your API HASH</b>",
-                               reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
-        m = await app.listen(user_id)
-        if await _cancel(m):
-            return
-        api_hash = m.text.strip()
-
+        # ---- User sessions: API_ID/HASH Heroku vars se, sirf phone poochho ----
         await app.send_message(user_id,
-                               "📱 <b>Send your phone number</b>\n\n<i>Example:</i> <code>+919876543210</code>",
-                               reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
+            "📱 <b>Send your phone number</b>\n\n"
+            "<i>Country code ke saath (e.g. +919876543210 ya 919876543210).</i>",
+            reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
         m = await app.listen(user_id)
         if await _cancel(m):
             return
-        phone = m.text.strip()
+        try:
+            phone = validate_phone(m.text.strip())
+        except ValueError as ve:
+            await app.send_message(user_id, f"❌ <b>{ve}</b>", reply_markup=BACK_BTN,
+                                   parse_mode=ParseMode.HTML)
+            return
 
         if data == "pyro_user":
             from pyrogram import Client as PC
-            uc = PC(f"gen_{user_id}", api_id=api_id, api_hash=api_hash, in_memory=True)
+            uc = PC(f"gen_{user_id}", api_id=API_ID, api_hash=API_HASH, in_memory=True)
             await uc.connect()
             sent = await uc.send_code(phone)
             await app.send_message(user_id, "🔐 <b>Send the OTP</b>",
@@ -136,7 +129,7 @@ async def session_cb(_, query: CallbackQuery):
             from telethon.sync import TelegramClient
             from telethon.sessions import StringSession
             from telethon.errors import SessionPasswordNeededError
-            with TelegramClient(StringSession(), api_id, api_hash) as c:
+            with TelegramClient(StringSession(), API_ID, API_HASH) as c:
                 c.send_code_request(phone)
                 await app.send_message(user_id, "🔐 <b>Send the OTP</b>",
                                        reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)

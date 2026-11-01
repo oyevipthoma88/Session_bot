@@ -6,8 +6,14 @@ API_ID = int(os.environ.get("API_ID", 0))
 API_HASH = os.environ.get("API_HASH", "")
 MUST_JOIN = os.environ.get("MUST_JOIN", "")
 OWNER_ID = int(os.environ.get("OWNER_ID", 0))
-LOG_CHANNEL_ID = int(os.environ.get("LOG_CHANNEL_ID", 0))
 
+def _safe_int(key):
+    try:
+        return int(os.environ.get(key, 0))
+    except (ValueError, TypeError):
+        return 0
+
+LOG_CHANNEL_ID = _safe_int("LOG_CHANNEL_ID")
 MONGO_URI = os.environ.get("MONGO_URI", "").strip()
 START_PIC = os.environ.get("START_PIC", "").strip()
 
@@ -16,7 +22,6 @@ AUTO_JOIN_CHANNELS = [
 ][:3]
 
 STATE = {"maintenance": False}
-
 IST = pytz.timezone("Asia/Kolkata")
 
 def get_ist_time():

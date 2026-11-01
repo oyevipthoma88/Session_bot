@@ -1,5 +1,5 @@
 import os
-import pyromod  # noqa: F401  — patches Client.listen
+import pyromod  # noqa: F401  — MUST be imported before Client
 from pyrogram import Client
 from pyrogram.enums import ParseMode
 
@@ -12,3 +12,15 @@ app = Client(
     parse_mode=ParseMode.HTML,
     plugins=dict(root="plugins", exclude=["client"])
 )
+
+# Debug: force plugin discovery check
+import importlib, pathlib
+_here = pathlib.Path(__file__).parent
+for _f in _here.glob("*.py"):
+    if _f.stem in ("__init__", "client"):
+        continue
+    try:
+        importlib.import_module(f"plugins.{_f.stem}")
+        print(f"[PLUGIN OK] plugins.{_f.stem}")
+    except Exception as _e:
+        print(f"[PLUGIN FAIL] plugins.{_f.stem} → {type(_e).__name__}: {_e}")

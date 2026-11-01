@@ -104,3 +104,12 @@ async def get_stats():
     except Exception as e:
         logging.error(f"get_stats: {e}")
         return {}
+
+async def get_all_users():
+    if not is_enabled():
+        return []
+    try:
+        return [doc["_id"] async for doc in users.find({}, {"_id": 1})]
+    except Exception as e:
+        logging.error(f"get_all_users: {e}")
+        return []
