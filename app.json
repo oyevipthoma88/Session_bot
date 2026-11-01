@@ -1,0 +1,13 @@
+{
+  "name": "Advanced Session Bot",
+  "description": "Telegram session string generator",
+  "repository": "https://github.com/oyevipthoma88/Session_bot",
+  "keywords": ["telegram", "session", "pyrogram", "telethon"],
+  "env": {
+    "API_ID": {"description": "Telegram API ID", "required": true},
+    "API_HASH": {"description": "Telegram API Hash", "required": true},
+    "BOT_TOKEN": {"description": "Bot token", "required": true}
+  },
+  "formation": {"worker": {"quantity": 1, "size": "free"}},
+  "buildpacks": [{"url": "heroku/python"}]
+}
