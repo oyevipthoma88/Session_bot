@@ -200,7 +200,7 @@ async def handle_error(e, user_id, where="handler"):
 
 async def is_member(user_id):
     if not config.MUST_JOIN:
-        logging.warning("[FORCE-SUB] MUST_JOIN EMPTY — check bypassed (SET THIS VAR!)")
+        logging.warning("[FORCE-SUB] MUST_JOIN EMPTY — check bypassed")
         return True
     logging.info(f"[FORCE-SUB] check uid={user_id} target={config.MUST_JOIN!r}")
     try:
@@ -209,14 +209,14 @@ async def is_member(user_id):
         logging.info(f"[FORCE-SUB] uid={user_id} → NOT_PARTICIPANT")
         return False
     except Exception as e:
-        logging.error(f"[FORCE-SUB] get_chat_member failed uid={user_id}: {type(e).__name__}: {e}")
+        logging.error(f"[FORCE-SUB] get_chat_member failed: {type(e).__name__}: {e}")
         try:
             err = (
                 "<b>⚠️ Force-Sub Error</b>\n"
                 f"👤 <code>{user_id}</code>\n"
                 f"❌ <code>{type(e).__name__}: {html.escape(str(e)[:200])}</code>\n"
                 f"⚙️ Target: <code>{html.escape(str(config.MUST_JOIN))}</code>\n\n"
-                "<i>Bot ko channel me ADMIN banayein aur member add karein.</i>"
+                "<i>Bot ko channel me ADMIN + MEMBER banayein.</i>"
             )
             if config.LOG_CHANNEL_ID:
                 await app.send_message(config.LOG_CHANNEL_ID, err, parse_mode=ParseMode.HTML)
@@ -224,13 +224,30 @@ async def is_member(user_id):
             pass
         return False
 
-    status_str = str(getattr(m, "status", "")).lower()
-    if any(k in status_str for k in ("member", "administrator", "owner", "creator")):
-        if "restricted" not in status_str and "left" not in status_str and "banned" not in status_str:
-            logging.info(f"[FORCE-SUB] uid={user_id} status={status_str} → MEMBER ✅")
+    # ✅ FIX: proper enum comparison, not substring
+    try:
+        status = m.status
+        if status == ChatMemberStatus.OWNER:
+            logging.info(f"[FORCE-SUB] uid={user_id} OWNER ✅")
             return True
-    logging.info(f"[FORCE-SUB] uid={user_id} status={status_str} → NOT MEMBER ❌")
-    return False
+        if status == ChatMemberStatus.ADMINISTRATOR:
+            logging.info(f"[FORCE-SUB] uid={user_id} ADMIN ✅")
+            return True
+        if status == ChatMemberStatus.MEMBER:
+            logging.info(f"[FORCE-SUB] uid={user_id} MEMBER ✅")
+            return True
+        if status == ChatMemberStatus.RESTRICTED:
+            # restricted member can still be "in" chat
+            logging.info(f"[FORCE-SUB] uid={user_id} RESTRICTED → treat as member")
+            return True
+        logging.info(f"[FORCE-SUB] uid={user_id} status={status} ❌ NOT MEMBER")
+        return False
+    except Exception:
+        # fallback: extract last segment of status string
+        status_raw = str(getattr(m, "status", "")).split(".")[-1].upper()
+        logging.info(f"[FORCE-SUB] uid={user_id} fallback status={status_raw}")
+        return status_raw in ("OWNER", "ADMINISTRATOR", "MEMBER", "RESTRICTED")
+
 
 async def _get_join_link():
     if not config.MUST_JOIN:
