@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
 set -e
-echo "=== Installing pyrofork + pyromod (forced) ==="
+
+echo "=== STEP 1: Clean old pyrogram/pyrofork ==="
 pip uninstall -y pyrogram pyrofork pyromod pyrogrammod 2>/dev/null || true
-pip install pyrofork --no-deps
+
+echo "=== STEP 2: Install pyrofork WITH dependencies ==="
+pip install pyrofork
+
+echo "=== STEP 3: Install pyromod (no deps to avoid conflict) ==="
 pip install pyromod --no-deps
-pip install aiofiles aiohttp pyaes pysocks
+
+echo "=== STEP 4: Verify colored buttons ==="
 python -c "from pyrogram.types import KeyboardButtonStyle; print('KEYBOARD_STYLE: AVAILABLE')" || echo "KEYBOARD_STYLE: NOT_AVAILABLE"
+
+echo "=== STEP 5: Verify pymediainfo ==="
+python -c "import pymediainfo; print('PYMEDIAINFO: OK')" || echo "PYMEDIAINFO: MISSING"
+
 echo "=== POST_COMPILE DONE ==="
