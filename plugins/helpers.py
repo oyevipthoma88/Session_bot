@@ -1,6 +1,10 @@
 import asyncio, logging
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from pyrogram.types import KeyboardButtonStyle
+try:
+    from pyrogram.types import KeyboardButtonStyle
+    _STYLED = True
+except ImportError:
+    _STYLED = False
 from pyrogram.errors import (
     FloodWait, BadRequest, Forbidden, Unauthorized,
     AuthKeyUnregistered, UserDeactivated, PhoneCodeInvalid,
@@ -16,7 +20,7 @@ def btn(text, callback_data=None, url=None, style=None):
         kw["callback_data"] = callback_data
     if url is not None:
         kw["url"] = url
-    if style in ("primary", "success", "danger"):
+    if _STYLED and style in ("primary", "success", "danger"):
         kw["style"] = KeyboardButtonStyle(
             bg_primary=(style == "primary"),
             bg_success=(style == "success"),

@@ -2,5 +2,6 @@
 set -e
 echo "=== POST_COMPILE: forcing pyrogrammod ==="
 pip uninstall -y pyrogram 2>/dev/null || true
-pip install --force-reinstall --no-deps "pyrogrammod"
+pip install --force-reinstall --no-deps pyrogrammod
+pip install pyaes rsa 2>/dev/null || true
 echo "=== POST_COMPILE DONE ==="
