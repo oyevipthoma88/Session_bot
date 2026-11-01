@@ -8,6 +8,8 @@ from .helpers import WELCOME, MAIN_MENU, BACK_BTN, is_member, force_sub_check, h
 
 @app.on_message(filters.command("start") & filters.private)
 async def start(_, message):
+    if message.from_user.id == config.OWNER_ID:
+        return  # owner panel handles this
     try:
         await save_user(message.from_user)
         if not await force_sub_check(message):

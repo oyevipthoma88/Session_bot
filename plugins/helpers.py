@@ -1,4 +1,8 @@
-_STYLED = False
+try:
+    from pyrogram.types import KeyboardButtonStyle
+    _STYLED = True
+except ImportError:
+    _STYLED = False
 
 import asyncio, logging, html, re
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -18,6 +22,16 @@ def btn(text, callback_data=None, url=None, style=None):
         kw["callback_data"] = callback_data
     if url is not None:
         kw["url"] = url
+    if _STYLED and style in ("primary", "success", "danger"):
+        try:
+            kw["style"] = KeyboardButtonStyle(
+                bg_primary=(style == "primary"),
+                bg_success=(style == "success"),
+                bg_danger=(style == "danger"),
+            )
+            return InlineKeyboardButton(text, **kw)
+        except Exception:
+            kw.pop("style", None)
     return InlineKeyboardButton(text, **kw)
 
 def validate_phone(phone: str) -> str:
