@@ -8,6 +8,7 @@ from pyrogram.errors import (
     ApiIdInvalid, SessionPasswordNeeded, UserNotParticipant,
 )
 from . import config
+from .config import _normalize_link
 from .client import app
 from .state import clear_state
 
@@ -87,22 +88,29 @@ WELCOME = (
     "<b>⚡ Choose your session type below</b>"
 )
 
-MAIN_MENU = InlineKeyboardMarkup([
-    [btn("🐍  Pyrogram User", "pyro_user", style="primary"),
-     btn("🤖  Pyrogram Bot", "pyro_bot", style="primary")],
-    [btn("📞  Telethon String", "telethon", style="success"),
-     btn("🔄  Converter", "convert", style="success")],
-    [btn("❓  Help & About", "help")],
-])
+def _build_main_menu(is_owner=False):
+    rows = [
+        [btn("🐍  Pyrogram User", "pyro_user", style="primary"),
+         btn("🤖  Pyrogram Bot", "pyro_bot", style="primary")],
+        [btn("📞  Telethon String", "telethon", style="success"),
+         btn("🔄  Converter", "convert", style="success")],
+    ]
+    extra = []
+    if config.UPDATE_CHANNEL:
+        extra.append(btn("🔄  Updates", url=_normalize_link(config.UPDATE_CHANNEL), style="primary"))
+    if config.SUPPORT_GROUP:
+        extra.append(btn("💬  Support", url=_normalize_link(config.SUPPORT_GROUP), style="success"))
+    if extra:
+        rows.append(extra)
+    if is_owner:
+        rows.append([btn("👑  Owner Panel", "owner_panel", style="danger")])
+    rows.append([btn("❓  Help & About", "help")])
+    return InlineKeyboardMarkup(rows)
 
-OWNER_MAIN_MENU = InlineKeyboardMarkup([
-    [btn("🐍  Pyrogram User", "pyro_user", style="primary"),
-     btn("🤖  Pyrogram Bot", "pyro_bot", style="primary")],
-    [btn("📞  Telethon String", "telethon", style="success"),
-     btn("🔄  Converter", "convert", style="success")],
-    [btn("👑  Owner Panel", "owner_panel", style="danger")],
-    [btn("❓  Help & About", "help")],
-])
+MAIN_MENU = _build_main_menu(is_owner=False)
+OWNER_MAIN_MENU = _build_main_menu(is_owner=True)
+
+
 
 BACK_BTN = InlineKeyboardMarkup([[btn("🔙  Back to Menu", "back", style="primary")]])
 CANCEL_BTN = InlineKeyboardMarkup([[btn("❌  Cancel", "cancel", style="danger")]])

@@ -29,3 +29,16 @@ IST = pytz.timezone("Asia/Kolkata")
 
 def get_ist_time():
     return datetime.now(IST).strftime("%Y-%m-%d %I:%M:%S %p")
+
+# ---- Links (optional) ----
+UPDATE_CHANNEL = os.environ.get("UPDATE_CHANNEL", "").strip()   # e.g. https://t.me/YourUpdates or @YourUpdates
+SUPPORT_GROUP = os.environ.get("SUPPORT_GROUP", "").strip()     # e.g. https://t.me/YourSupport or @YourSupport
+
+def _normalize_link(link):
+    if not link:
+        return ""
+    if link.startswith("http://") or link.startswith("https://"):
+        return link
+    if link.startswith("@"):
+        return f"https://t.me/{link[1:]}"
+    return f"https://t.me/{link}"

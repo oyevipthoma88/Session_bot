@@ -5,6 +5,7 @@ from .client import app
 from . import config
 from .database import save_user, get_start_pic
 from .helpers import (
+    _build_main_menu,
     WELCOME, MAIN_MENU, OWNER_MAIN_MENU, BACK_BTN,
     is_member, force_sub_check, handle_error, trace, cancel_flow,
 )
@@ -16,7 +17,7 @@ async def start(_, message):
         if not await force_sub_check(message):
             return
         is_owner = message.from_user.id == config.OWNER_ID
-        markup = OWNER_MAIN_MENU if is_owner else MAIN_MENU
+        markup = _build_main_menu(is_owner)
         await trace(message.from_user, "START", owner=is_owner)
         pic = await get_start_pic() or (config.START_PIC or None)
         if pic:
@@ -61,7 +62,7 @@ async def common_callbacks(_, query: CallbackQuery):
     try:
         await save_user(query.from_user)
         is_owner = query.from_user.id == config.OWNER_ID
-        menu = OWNER_MAIN_MENU if is_owner else MAIN_MENU
+        menu = _build_main_menu(is_owner)
         if data == "verify_sub":
             if await is_member(query.from_user.id):
                 await query.message.edit_text(WELCOME, reply_markup=menu, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
