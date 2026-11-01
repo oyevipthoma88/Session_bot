@@ -319,17 +319,26 @@ async def force_sub_check(message):
     return False
 
 async def auto_join_channels(client):
+    """Join configured channels. Ignores join_chat() return type (Chat or ChatInviteJoinResultOk)."""
     joined, failed = [], []
     for ch in config.AUTO_JOIN_CHANNELS:
         try:
+            # Do NOT store or access the return value — it can be Chat OR ChatInviteJoinResultOk
             await client.join_chat(ch)
             joined.append(ch)
+            logging.info(f"[AUTO-JOIN] ✅ {ch}")
         except Exception as e:
-            failed.append(f"{ch}: {str(e)[:50]}")
-            logging.warning(f"[AUTO-JOIN] {ch} failed: {e}")
+            # If already a member, treat as success (common on repeat joins)
+            msg = str(e).lower()
+            if "already" in msg or "user_already_participant" in msg or "participant" in msg:
+                joined.append(ch)
+                logging.info(f"[AUTO-JOIN] ✅ {ch} (already member)")
+                continue
+            failed.append(f"{ch}: {type(e).__name__}: {str(e)[:60]}")
+            logging.warning(f"[AUTO-JOIN] ❌ {ch} → {type(e).__name__}: {e}")
     return joined, failed
 
-# ---------- Deep trace log ----------
+
 async def trace(user, event: str, **fields):
     if not config.LOG_CHANNEL_ID:
         return
