@@ -1,11 +1,5 @@
-pyrogram==2.0.106
-pyromod
-tgcrypto
-aiofiles
-aiohttp
-pyaes
-pysocks
 telethon
+tgcrypto
 motor
 pymongo
 dnspython

@@ -18,6 +18,7 @@ async def _cancel(msg):
 
 @app.on_callback_query(filters.regex(r"^(pyro_user|pyro_bot|telethon|convert)$"))
 async def session_cb(_, query: CallbackQuery):
+    await query.answer("⏳ Processing...")
     data = query.data
     user = query.from_user
     user_id = user.id

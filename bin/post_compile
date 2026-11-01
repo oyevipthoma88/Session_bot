@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -e
-echo "=== POST_COMPILE: forcing pyrogrammod ==="
-pip uninstall -y pyrogram 2>/dev/null || true
-pip install --force-reinstall --no-deps pyrogrammod
-pip install pyaes rsa 2>/dev/null || true
+echo "=== Installing pyrofork + pyromod (forced) ==="
+pip uninstall -y pyrogram pyrofork pyromod pyrogrammod 2>/dev/null || true
+pip install pyrofork --no-deps
+pip install pyromod --no-deps
+pip install aiofiles aiohttp pyaes pysocks
+python -c "from pyrogram.types import KeyboardButtonStyle; print('KEYBOARD_STYLE: AVAILABLE')" || echo "KEYBOARD_STYLE: NOT_AVAILABLE"
 echo "=== POST_COMPILE DONE ==="

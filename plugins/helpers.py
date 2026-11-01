@@ -1,3 +1,5 @@
+_STYLED = False
+
 import asyncio, logging, html, re
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.enums import ParseMode
@@ -10,7 +12,7 @@ from pyrogram.errors import (
 from . import config
 from .client import app
 
-def btn(text, callback_data=None, url=None):
+def btn(text, callback_data=None, url=None, style=None):
     kw = {}
     if callback_data is not None:
         kw["callback_data"] = callback_data

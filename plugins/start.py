@@ -25,7 +25,6 @@ async def start(_, message):
     except Exception as e:
         await handle_error(e, message.from_user.id, "start")
 
-
 @app.on_message(filters.command("help") & filters.private)
 async def help_cmd(_, message):
     try:
@@ -50,16 +49,13 @@ async def help_cmd(_, message):
     except Exception as e:
         await handle_error(e, message.from_user.id, "help")
 
-
-@app.on_callback_query()
+# STRICT filter — only common buttons (session/owner excluded)
+@app.on_callback_query(filters.regex(r"^(verify_sub|cancel|back|help)$"))
 async def common_callbacks(_, query: CallbackQuery):
+    await query.answer()
     data = query.data
-    if data in ("pyro_user", "pyro_bot", "telethon", "convert"):
-        return
     try:
-        await query.answer()
         await save_user(query.from_user)
-
         if data == "verify_sub":
             if await is_member(query.from_user.id):
                 await query.message.edit_text(WELCOME, reply_markup=MAIN_MENU,
@@ -67,7 +63,6 @@ async def common_callbacks(_, query: CallbackQuery):
             else:
                 await query.answer("❌ Abhi tak channel join nahi kiya!", show_alert=True)
             return
-
         if data == "cancel":
             try:
                 await query.message.delete()
@@ -77,20 +72,15 @@ async def common_callbacks(_, query: CallbackQuery):
                                    "❌ <b>Cancelled.</b>\n\n/start se dobara shuru karein.",
                                    reply_markup=BACK_BTN, parse_mode=ParseMode.HTML)
             return
-
         if data == "back":
             await query.message.edit_text(WELCOME, reply_markup=MAIN_MENU,
                                           parse_mode=ParseMode.HTML, disable_web_page_preview=True)
             return
-
         if data == "help":
-            txt = (
-                "<b>❓ Help</b>\n\n"
-                "Menu se session type chunein.\n"
-                "Har step pe <b>❌ Cancel</b> button kaam karta hai."
-            )
-            await query.message.edit_text(txt, reply_markup=BACK_BTN,
-                                          parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+            await query.message.edit_text(
+                "<b>❓ Help</b>\n\nMenu se session type chunein.\n"
+                "Har step pe <b>❌ Cancel</b> button kaam karta hai.",
+                reply_markup=BACK_BTN, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
             return
     except Exception as e:
         await handle_error(e, query.from_user.id, "common_callbacks")
