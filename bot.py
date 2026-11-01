@@ -1,5 +1,6 @@
 import logging, importlib
 from pathlib import Path
+from pyrogram import idle
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -31,9 +32,17 @@ async def _warmup():
         logging.info(f"[WARMUP] Log channel OK → id={chat.id} title={chat.title!r}")
     except Exception as e:
         logging.error(f"[WARMUP] Log channel FAIL → {type(e).__name__}: {e}")
-        logging.error("[WARMUP] Fix: bot ko channel me ADMIN banao + 'Post Messages' permission do, aur LOG_CHANNEL_ID (-100... ya @username) check karo")
+        logging.error("[WARMUP] Fix: bot ko channel me ADMIN banao + 'Post Messages' permission do; LOG_CHANNEL_ID (-100... ya @username) check karo")
+
+async def main():
+    await app.start()
+    logging.info("Session Bot started")
+    await _warmup()
+    await idle()
+    await app.stop()
+    logging.info("Session Bot stopped")
 
 if __name__ == "__main__":
     load_all_plugins()
     logging.info("Starting Session Bot...")
-    app.run(_warmup())
+    app.run(main())
