@@ -14,6 +14,6 @@
     "MONGO_URI": {"description": "MongoDB connection URI", "required": false},
     "START_PIC": {"description": "Fallback start image URL/file_id", "required": false}
   },
-  "formation": {"worker": {"quantity": 1, "size": "free"}},
+  "formation": {"worker": {"quantity": 1, "size": "eco"}},
   "buildpacks": [{"url": "heroku/python"}]
 }
