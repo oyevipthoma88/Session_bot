@@ -61,25 +61,25 @@ WELCOME = (
 )
 
 MAIN_MENU = InlineKeyboardMarkup([
-    [btn("🐍  Pyrogram User",  "pyro_user"),
-     btn("🤖  Pyrogram Bot",   "pyro_bot")],
-    [btn("📞  Telethon String", "telethon"),
-     btn("🔄  Converter",       "convert")],
-    [btn("❓  Help & About",   "help")],
+    [btn("🐍  Pyrogram User", "pyro_user", style="primary"),
+     btn("🤖  Pyrogram Bot", "pyro_bot", style="primary")],
+    [btn("📞  Telethon String", "telethon", style="success"),
+     btn("🔄  Converter", "convert", style="success")],
+    [btn("❓  Help & About", "help")],
 ])
 
-BACK_BTN = InlineKeyboardMarkup([[btn("🔙  Back to Menu", "back")]])
-CANCEL_BTN = InlineKeyboardMarkup([[btn("❌  Cancel", "cancel")]])
+BACK_BTN = InlineKeyboardMarkup([[btn("🔙  Back to Menu", "back", style="primary")]])
+CANCEL_BTN = InlineKeyboardMarkup([[btn("❌  Cancel", "cancel", style="danger")]])
 
 ERROR_MAP = {
-    "PhoneCodeInvalid":   "❌ <b>Galat OTP.</b> /start se dobara try karein.",
-    "PhoneCodeExpired":   "⌛ <b>OTP expire.</b> Naya OTP lein.",
+    "PhoneCodeInvalid": "❌ <b>Galat OTP.</b> /start se dobara try karein.",
+    "PhoneCodeExpired": "⌛ <b>OTP expire.</b> Naya OTP lein.",
     "PhoneNumberInvalid": "📵 <b>Invalid phone number.</b> Country code ke saath bhejein.",
-    "PasswordHashInvalid":"🔒 <b>2FA password galat.</b>",
-    "ApiIdInvalid":       "🆔 <b>API ID/HASH galat.</b> Heroku vars check karein.",
-    "AuthKeyUnregistered":"🚫 <b>Session revoked.</b> Dobara login karein.",
-    "UserDeactivated":    "🚫 <b>Account deactivated.</b>",
-    "SessionPasswordNeeded":"🔒 <b>2FA enabled.</b> Password daalein.",
+    "PasswordHashInvalid": "🔒 <b>2FA password galat.</b>",
+    "ApiIdInvalid": "🆔 <b>API ID/HASH galat.</b> Heroku vars check karein.",
+    "AuthKeyUnregistered": "🚫 <b>Session revoked.</b> Dobara login karein.",
+    "UserDeactivated": "🚫 <b>Account deactivated.</b>",
+    "SessionPasswordNeeded": "🔒 <b>2FA enabled.</b> Password daalein.",
 }
 
 async def handle_error(e, user_id, where="handler"):
@@ -109,7 +109,7 @@ async def is_member(user_id):
         return True
     try:
         m = await app.get_chat_member(config.MUST_JOIN, user_id)
-        return str(m.status) in ["ChatMemberStatus.OWNER","ChatMemberStatus.ADMINISTRATOR","ChatMemberStatus.MEMBER"]
+        return str(m.status) in ["ChatMemberStatus.OWNER", "ChatMemberStatus.ADMINISTRATOR", "ChatMemberStatus.MEMBER"]
     except UserNotParticipant:
         return False
     except Exception:
@@ -126,8 +126,8 @@ async def force_sub_check(message):
         except Exception:
             link = f"https://t.me/{config.MUST_JOIN.replace('@', '')}"
         markup = InlineKeyboardMarkup([
-            [btn("📢  Join Channel", url=link)],
-            [btn("✅  Verify", "verify_sub")],
+            [btn("📢  Join Channel", url=link, style="primary")],
+            [btn("✅  Verify", "verify_sub", style="success")],
         ])
         await message.reply_text(
             "⚠️ <b>Access Denied!</b>\n\nBot use karne ke liye pehle channel join karein, phir <b>Verify</b> dabayein.",
