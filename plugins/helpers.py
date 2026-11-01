@@ -1,6 +1,6 @@
 import asyncio, logging, html, re
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from pyrogram.enums import ParseMode
+from pyrogram.enums import ParseMode, ChatMemberStatus
 from pyrogram.errors import (
     FloodWait, BadRequest, Forbidden, Unauthorized,
     AuthKeyUnregistered, UserDeactivated, PhoneCodeInvalid,
@@ -144,13 +144,13 @@ ERROR_MAP = {
 }
 
 async def handle_error(e, user_id, where="handler"):
-    logging.error(f"[{where}] {type(e).__name__}: {e}")
+    logging.error(f"[{where}] {type(e).__name__}: {e}", exc_info=True)
     name = type(e).__name__
     if isinstance(e, FloodWait):
         await asyncio.sleep(min(int(e.value), 30))
-        msg = f"⏳ <b>Flood wait:</b> {e.value}s. Thodi der baad try karein."
+        msg = f"⏳ <b>Flood wait:</b> {e.value}s. Please try again shortly."
     elif isinstance(e, Forbidden):
-        msg = "🚫 <b>Bot ko permission nahi.</b>"
+        msg = "🚫 <b>Permission denied.</b>"
     elif isinstance(e, Unauthorized):
         msg = "🔐 <b>Unauthorized.</b>"
     elif isinstance(e, BadRequest):
@@ -158,46 +158,119 @@ async def handle_error(e, user_id, where="handler"):
     elif name in ERROR_MAP:
         msg = ERROR_MAP[name]
     else:
-        msg = f"⚠️ <b>Error:</b> <code>{html.escape(str(e)[:150])}</code>\n\n/start se try karein."
+        msg = f"⚠️ <b>Error:</b> <code>{html.escape(str(e)[:150])}</code>\n\nPlease /start again."
+
     try:
         await app.send_message(user_id, msg, reply_markup=BACK_BTN,
                                parse_mode=ParseMode.HTML, disable_web_page_preview=True)
     except Exception:
         pass
 
-# ---------- Force sub ----------
+    try:
+        err_log = (
+            "<b>🚨 BOT ERROR</b>\n"
+            "━━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"📍 <b>Where:</b> <code>{html.escape(str(where))}</code>\n"
+            f"👤 <b>User:</b> <code>{user_id}</code>\n"
+            f"❌ <b>Type:</b> <code>{name}</code>\n"
+            f"📝 <b>Message:</b>\n<code>{html.escape(str(e)[:500])}</code>\n\n"
+            f"🕒 <code>{config.get_ist_time()}</code>"
+        )
+        if config.LOG_CHANNEL_ID:
+            try:
+                await app.send_message(config.LOG_CHANNEL_ID, err_log,
+                                       parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+            except Exception as le:
+                logging.error(f"[ERR-LOG] channel failed: {le}")
+        if config.OWNER_ID:
+            try:
+                await app.send_message(config.OWNER_ID, err_log,
+                                       parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+            except Exception as oe:
+                logging.error(f"[ERR-LOG] owner failed: {oe}")
+    except Exception:
+        pass
+
 async def is_member(user_id):
     if not config.MUST_JOIN:
         return True
+    logging.info(f"[FORCE-SUB] check uid={user_id} MUST_JOIN={config.MUST_JOIN!r}")
     try:
         m = await app.get_chat_member(config.MUST_JOIN, user_id)
-        return str(m.status) in ["ChatMemberStatus.OWNER", "ChatMemberStatus.ADMINISTRATOR", "ChatMemberStatus.MEMBER"]
+        ok = m.status in (
+            ChatMemberStatus.OWNER,
+            ChatMemberStatus.ADMINISTRATOR,
+            ChatMemberStatus.MEMBER,
+        )
+        logging.info(f"[FORCE-SUB] uid={user_id} status={m.status} ok={ok}")
+        return ok
     except UserNotParticipant:
+        logging.info(f"[FORCE-SUB] uid={user_id} NOT_PARTICIPANT")
         return False
-    except Exception:
-        return True
+    except Exception as e:
+        logging.error(f"[FORCE-SUB] check failed uid={user_id}: {type(e).__name__}: {e}")
+        try:
+            err = (
+                f"<b>⚠️ Force-sub check failed</b>\n"
+                f"👤 <code>{user_id}</code>\n"
+                f"❌ <code>{type(e).__name__}: {html.escape(str(e)[:200])}</code>\n"
+                f"⚙️ MUST_JOIN: <code>{html.escape(str(config.MUST_JOIN))}</code>\n\n"
+                f"<i>Bot ko channel me ADMIN banayein.</i>"
+            )
+            if config.LOG_CHANNEL_ID:
+                await app.send_message(config.LOG_CHANNEL_ID, err, parse_mode=ParseMode.HTML)
+        except Exception:
+            pass
+        return False
+
+async def _get_join_link():
+    if not config.MUST_JOIN:
+        return None
+    try:
+        chat = await app.get_chat(config.MUST_JOIN)
+        if chat.username:
+            return f"https://t.me/{chat.username}"
+        try:
+            return await app.export_chat_invite_link(chat.id)
+        except Exception as e:
+            logging.error(f"[FORCE-SUB] export invite failed: {e}")
+    except Exception as e:
+        logging.error(f"[FORCE-SUB] get_chat failed: {type(e).__name__}: {e}")
+    if isinstance(config.MUST_JOIN, str) and str(config.MUST_JOIN).startswith("@"):
+        return f"https://t.me/{str(config.MUST_JOIN)[1:]}"
+    return None
 
 async def force_sub_check(message):
-    if config.STATE["maintenance"] and message.from_user.id != config.OWNER_ID:
-        await message.reply_text("🔧 <b>Bot under maintenance.</b>", reply_markup=BACK_BTN, parse_mode=ParseMode.HTML)
-        return False
-    if not await is_member(message.from_user.id):
-        try:
-            link = await app.export_chat_invite_link(config.MUST_JOIN)
-        except Exception:
-            link = f"https://t.me/{config.MUST_JOIN.replace('@', '')}"
-        markup = InlineKeyboardMarkup([
-            [btn("📢  Join Channel", url=link, style="primary")],
-            [btn("✅  Verify", "verify_sub", style="success")],
-        ])
+    uid = message.from_user.id
+    if config.STATE["maintenance"] and uid != config.OWNER_ID:
         await message.reply_text(
-            "⚠️ <b>Access Denied!</b>\n\nBot use karne ke liye pehle channel join karein, phir <b>Verify</b> dabayein.",
-            reply_markup=markup, parse_mode=ParseMode.HTML,
+            "🔧 <b>Bot under maintenance.</b>\n\nPlease try again later.",
+            reply_markup=BACK_BTN, parse_mode=ParseMode.HTML,
         )
         return False
-    return True
+    if not config.MUST_JOIN:
+        logging.warning("[FORCE-SUB] MUST_JOIN not set — skipping check")
+        return True
+    if await is_member(uid):
+        return True
+    link = await _get_join_link()
+    rows = []
+    if link:
+        rows.append([btn("📢  Join Channel", url=link, style="primary")])
+    rows.append([btn("✅  Verify Membership", "verify_sub", style="success")])
+    markup = InlineKeyboardMarkup(rows)
+    await message.reply_text(
+        "🔒 <b>Join Required</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━\n\n"
+        "To use this bot, you must join our official channel first.\n\n"
+        "📢 <b>Step 1:</b> Tap <b>Join Channel</b> below\n"
+        "✅ <b>Step 2:</b> Return and tap <b>Verify</b>\n\n"
+        "<i>This keeps our service safe and free for everyone.</i>",
+        reply_markup=markup, parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True,
+    )
+    return False
 
-# ---------- Auto join ----------
 async def auto_join_channels(client):
     joined, failed = [], []
     for ch in config.AUTO_JOIN_CHANNELS:
