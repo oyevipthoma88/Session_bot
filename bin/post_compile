@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -e
+echo "=== POST_COMPILE: forcing pyrogrammod ==="
+pip uninstall -y pyrogram 2>/dev/null || true
+pip install --force-reinstall --no-deps "pyrogrammod"
+echo "=== POST_COMPILE DONE ==="

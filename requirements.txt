@@ -1,5 +1,4 @@
-pyrogrammod>=2.0.106
-pyromod
+pyrogrammod
 tgcrypto
 telethon
 motor
