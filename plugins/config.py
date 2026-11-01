@@ -13,7 +13,16 @@ def _safe_int(key):
     except (ValueError, TypeError):
         return 0
 
-LOG_CHANNEL_ID = _safe_int("LOG_CHANNEL_ID")
+def _parse_chat_id(key):
+    raw = os.environ.get(key, "").strip()
+    if not raw:
+        return None
+    try:
+        return int(raw)
+    except ValueError:
+        return raw  # @username or t.me link
+
+LOG_CHANNEL_ID = _parse_chat_id("LOG_CHANNEL_ID")
 MONGO_URI = os.environ.get("MONGO_URI", "").strip()
 START_PIC = os.environ.get("START_PIC", "").strip()
 

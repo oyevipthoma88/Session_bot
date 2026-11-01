@@ -1,8 +1,12 @@
 try:
-    from pyrogram.types import KeyboardButtonStyle
-    _STYLED = True
+    from pyrogram.enums import ButtonStyle
+    _STYLE_MAP = {
+        "primary": ButtonStyle.PRIMARY,
+        "success": ButtonStyle.SUCCESS,
+        "danger": ButtonStyle.DANGER,
+    }
 except ImportError:
-    _STYLED = False
+    _STYLE_MAP = {}
 
 import asyncio, logging, html, re
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -22,16 +26,8 @@ def btn(text, callback_data=None, url=None, style=None):
         kw["callback_data"] = callback_data
     if url is not None:
         kw["url"] = url
-    if _STYLED and style in ("primary", "success", "danger"):
-        try:
-            kw["style"] = KeyboardButtonStyle(
-                bg_primary=(style == "primary"),
-                bg_success=(style == "success"),
-                bg_danger=(style == "danger"),
-            )
-            return InlineKeyboardButton(text, **kw)
-        except Exception:
-            kw.pop("style", None)
+    if style in _STYLE_MAP:
+        kw["style"] = _STYLE_MAP[style]
     return InlineKeyboardButton(text, **kw)
 
 def validate_phone(phone: str) -> str:
