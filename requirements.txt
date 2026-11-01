@@ -5,3 +5,4 @@ telethon
 motor
 pymongo
 dnspython
+pytz
