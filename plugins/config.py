@@ -4,7 +4,23 @@ import pytz
 
 API_ID = int(os.environ.get("API_ID", 0))
 API_HASH = os.environ.get("API_HASH", "")
-MUST_JOIN = os.environ.get("MUST_JOIN", "")
+def _normalize_must_join(raw):
+    if not raw:
+        return ""
+    raw = raw.strip()
+    try:
+        return int(raw)
+    except ValueError:
+        pass
+    for prefix in ("https://t.me/", "http://t.me/", "t.me/", "https://telegram.me/", "telegram.me/"):
+        if raw.startswith(prefix):
+            raw = raw[len(prefix):]
+            break
+    if raw.startswith("@"):
+        raw = raw[1:]
+    return raw  # Pyrogram accepts bare username
+
+MUST_JOIN = _normalize_must_join(os.environ.get("MUST_JOIN", ""))
 OWNER_ID = int(os.environ.get("OWNER_ID", 0))
 
 def _parse_chat(key):

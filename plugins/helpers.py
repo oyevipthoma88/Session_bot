@@ -1,3 +1,5 @@
+import warnings
+warnings.filterwarnings('ignore', message='.*link_preview_options.*')
 import asyncio, logging, html, re
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.enums import ParseMode, ChatMemberStatus
@@ -198,13 +200,31 @@ async def handle_error(e, user_id, where="handler"):
     except Exception:
         pass
 
+def _lookup_target():
+    """Convert MUST_JOIN to a form Pyrogram accepts."""
+    mj = config.MUST_JOIN
+    if not mj:
+        return None
+    if isinstance(mj, int):
+        return mj
+    mj = str(mj)
+    if mj.startswith("@"):
+        return mj
+    if mj.lstrip("-").isdigit():
+        return int(mj)
+    return "@" + mj
+
 async def is_member(user_id):
     if not config.MUST_JOIN:
         logging.warning("[FORCE-SUB] MUST_JOIN EMPTY — check bypassed")
         return True
     logging.info(f"[FORCE-SUB] check uid={user_id} target={config.MUST_JOIN!r}")
     try:
-        m = await app.get_chat_member(config.MUST_JOIN, user_id)
+        target = _lookup_target()
+        if not target:
+            logging.warning("[FORCE-SUB] _lookup_target() empty")
+            return True
+        m = await app.get_chat_member(target, user_id)
     except UserNotParticipant:
         logging.info(f"[FORCE-SUB] uid={user_id} → NOT_PARTICIPANT")
         return False
@@ -250,10 +270,11 @@ async def is_member(user_id):
 
 
 async def _get_join_link():
-    if not config.MUST_JOIN:
+    target = _lookup_target()
+    if not target:
         return None
     try:
-        chat = await app.get_chat(config.MUST_JOIN)
+        chat = await app.get_chat(target)
         if chat.username:
             return f"https://t.me/{chat.username}"
         try:
@@ -262,8 +283,8 @@ async def _get_join_link():
             logging.error(f"[FORCE-SUB] export invite failed: {e}")
     except Exception as e:
         logging.error(f"[FORCE-SUB] get_chat failed: {type(e).__name__}: {e}")
-    if isinstance(config.MUST_JOIN, str) and str(config.MUST_JOIN).startswith("@"):
-        return f"https://t.me/{str(config.MUST_JOIN)[1:]}"
+    if isinstance(target, str) and target.startswith("@"):
+        return f"https://t.me/{target[1:]}"
     return None
 
 async def force_sub_check(message):
