@@ -68,6 +68,15 @@ MAIN_MENU = InlineKeyboardMarkup([
     [btn("❓  Help & About", "help")],
 ])
 
+OWNER_MAIN_MENU = InlineKeyboardMarkup([
+    [btn("🐍  Pyrogram User", "pyro_user", style="primary"),
+     btn("🤖  Pyrogram Bot", "pyro_bot", style="primary")],
+    [btn("📞  Telethon String", "telethon", style="success"),
+     btn("🔄  Converter", "convert", style="success")],
+    [btn("👑  Owner Panel", "owner_panel", style="danger")],
+    [btn("❓  Help & About", "help")],
+])
+
 BACK_BTN = InlineKeyboardMarkup([[btn("🔙  Back to Menu", "back", style="primary")]])
 CANCEL_BTN = InlineKeyboardMarkup([[btn("❌  Cancel", "cancel", style="danger")]])
 
